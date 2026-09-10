@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cooperativa Solar</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f6f5; --card:#ffffff; --ink:#16241f; --muted:#5b6b64;
+    --border:#e1e8e4; --accent:#1f8a5f; --accent-dark:#136b47;
+    --green:#1f8a5f; --green-bg:#e8f6ef; --red:#c1432f; --red-bg:#fbeae7;
+    --amber:#b8860b; --amber-bg:#fbf3de;
+    --radius:14px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);padding-bottom:60px;}
+  header{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;padding:24px 20px 20px;}
+  header h1{margin:0 0 4px;font-size:1.5rem;}
+  header p{margin:0;opacity:.9;font-size:.9rem;}
+  .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;background:rgba(255,255,255,.18);padding:4px 10px;border-radius:999px;margin-top:10px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#9be7c4;}
+  .dot.err{background:#f3a8a8;}
+  .dot.saving{background:#ffe08a;}
+
+  nav{display:flex;gap:4px;padding:10px 16px 0;background:var(--bg);position:sticky;top:0;z-index:5;border-bottom:1px solid var(--border);overflow-x:auto;}
+  nav button{border:none;background:none;padding:10px 14px;font-size:.9rem;color:var(--muted);cursor:pointer;border-radius:10px 10px 0 0;font-weight:600;white-space:nowrap;}
+  nav button.active{color:var(--accent-dark);background:var(--card);border:1px solid var(--border);border-bottom:1px solid var(--card);margin-bottom:-1px;}
+
+  main{max-width:1080px;margin:0 auto;padding:20px 16px;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .card .label{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px;}
+  .card .value{font-size:1.3rem;font-weight:700;}
+  .card.pos .value{color:var(--green);}
+  .card.neg .value{color:var(--red);}
+  .card.warn .value{color:var(--amber);}
+
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px;}
+  .panel h2{margin:0 0 14px;font-size:1.05rem;}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .panel-head h2{margin:0;}
+
+  .badge{display:inline-block;font-size:.76rem;font-weight:700;padding:3px 10px;border-radius:999px;}
+  .badge.lucro{background:var(--green-bg);color:var(--green);}
+  .badge.prejuizo{background:var(--red-bg);color:var(--red);}
+  .badge.ativo{background:var(--green-bg);color:var(--green);}
+  .badge.inativo{background:#eef2f0;color:var(--muted);}
+  .badge.pago{background:var(--green-bg);color:var(--green);}
+  .badge.pendente{background:var(--amber-bg);color:var(--amber);}
+
+  .progress-wrap{margin:10px 0 4px;}
+  .progress-bar{height:14px;background:#eef2f0;border-radius:999px;overflow:hidden;position:relative;}
+  .progress-bar > div{height:100%;border-radius:999px;background:linear-gradient(90deg,#28a06a,#1f8a5f);transition:width .4s;}
+  .progress-bar.neg > div{background:linear-gradient(90deg,#d9584a,#c1432f);}
+  .progress-label{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:6px;}
+
+  canvas{max-width:100%;}
+
+  table{width:100%;border-collapse:collapse;font-size:.87rem;}
+  th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;}
+  tbody tr:hover{background:#fafcfb;}
+  .table-scroll{overflow-x:auto;}
+  td.neg{color:var(--red);} td.pos{color:var(--green);}
+
+  form.inline{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end;margin-bottom:8px;}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px;}
+  input,select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:.92rem;background:#fff;color:var(--ink);}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  input[type="checkbox"]{width:auto;}
+
+  button.btn{background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;}
+  button.btn:hover{background:var(--accent-dark);}
+  button.btn.secondary{background:#eef2f0;color:var(--ink);}
+  button.btn.secondary:hover{background:#e2e8e5;}
+  button.btn.danger{background:var(--red-bg);color:var(--red);}
+  button.btn.danger:hover{background:#f5d3cc;}
+  button.icon-btn{background:none;border:none;cursor:pointer;font-size:.95rem;padding:4px 6px;border-radius:6px;color:var(--muted);}
+  button.icon-btn:hover{background:#eef2f0;}
+
+  .actions-row{display:flex;gap:8px;justify-content:flex-end;}
+  .empty{color:var(--muted);font-size:.88rem;padding:20px 0;text-align:center;}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:6px;}
+  .banner{background:var(--red-bg);color:var(--red);border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:16px;}
+  .row-edit input{width:100px;}
+  @media (max-width:560px){
+    .row-edit input{width:80px;}
+    th,td{font-size:.76rem;padding:7px 5px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="coop-title">Cooperativa Solar</h1>
+  <p id="coop-subtitle">Gestão de clientes, faturamento e retorno do investimento</p>
+  <span class="status-pill"><span class="dot" id="status-dot"></span><span id="status-text">Carregando…</span></span>
+</header>
+
+<nav>
+  <button data-view="dashboard" class="active">Dashboard</button>
+  <button data-view="clientes">Clientes</button>
+  <button data-view="faturamento">Faturamento</button>
+  <button data-view="financeiro">Financeiro / ROI</button>
+  <button data-view="config">Configurações</button>
+</nav>
+
+<main>
+  <div id="load-error" class="banner" style="display:none;"></div>
+
+  <!-- DASHBOARD -->
+  <section class="view active" id="view-dashboard">
+    <div class="cards">
+      <div class="card"><div class="label">Clientes ativos</div><div class="value" id="d-clientes">—</div></div>
+      <div class="card"><div class="label">Receita do mês</div><div class="value" id="d-receita">—</div></div>
+      <div class="card"><div class="label">Lucro do mês</div><div class="value" id="d-lucro">—</div></div>
+      <div class="card" id="d-atraso-card"><div class="label">Em atraso este mês</div><div class="value" id="d-atraso">—</div></div>
+      <div class="card" id="d-saldo-card"><div class="label">Saldo ROI acumulado</div><div class="value" id="d-saldo">—</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Situação do investimento</h2>
+      <div id="dash-status"></div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progress-bar"><div style="width:0%"></div></div>
+        <div class="progress-label"><span id="progress-label-left"></span><span id="progress-label-right"></span></div>
+      </div>
+      <p class="hint" id="projecao-hint"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Evolução mensal</h2>
+      <canvas id="chart-saldo" height="220"></canvas>
+    </div>
+  </section>
+
+  <!-- CLIENTES -->
+  <section class="view" id="view-clientes">
+    <div class="panel">
+      <h2>Novo cliente</h2>
+      <form class="inline" id="form-cliente">
+        <div><label for="cl-nome">Nome</label><input type="text" id="cl-nome" required></div>
+        <div><label for="cl-uc">Número UC</label><input type="text" id="cl-uc"></div>
+        <div><label for="cl-dia">Dia de vencimento</label><input type="number" id="cl-dia" min="1" max="31" required></div>
+        <div><label for="cl-desc">% de desconto</label><input type="number" id="cl-desc" min="0" max="100" step="0.1" required></div>
+        <div><button type="submit" class="btn">Adicionar</button></div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Clientes cadastrados</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Nome</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tbody-clientes"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="clientes-empty" style="display:none;">Nenhum cliente cadastrado.</div>
+    </div>
+  </section>
+
+  <!-- FATURAMENTO -->
+  <section class="view" id="view-faturamento">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Faturamento do mês</h2>
+        <div style="display:flex;gap:8px;align-items:end;">
+          <div><label for="fat-mes">Mês</label><input type="month" id="fat-mes"></div>
+          <button class="btn secondary" id="btn-gerar-mes">Carregar / gerar mês</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Cliente</th><th>Cobrado (R$)</th><th>Concessionária (R$)</th><th>Lucro</th><th>Pago</th><th></th></tr></thead>
+          <tbody id="tbody-faturamento"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="faturamento-empty" style="display:none;">Escolha um mês e clique em "Carregar / gerar mês".</div>
+      <p class="hint">Os valores de cada cliente vêm da conta da concessionária. "Lucro" é calculado automaticamente (cobrado − concessionária) e alimenta o Financeiro/ROI do mês.</p>
+      <div style="margin-top:12px;"><button class="btn" id="btn-salvar-fat">Salvar faturamento do mês</button></div>
+    </div>
+  </section>
+
+  <!-- FINANCEIRO / ROI -->
+  <section class="view" id="view-financeiro">
+    <div class="panel">
+      <h2>Novo lançamento</h2>
+      <form class="inline" id="form-financeiro">
+        <div><label for="fin-mes">Mês</label><input type="month" id="fin-mes" required></div>
+        <div><label for="fin-pago">Pago no banco (R$)</label><input type="number" id="fin-pago" step="0.01" min="0" required></div>
+        <div><button type="submit" class="btn">Salvar</button></div>
+      </form>
+      <p class="hint">O valor "arrecadado dos clientes" é preenchido automaticamente com o lucro total lançado no Faturamento daquele mês (pode ser ajustado manualmente para meses antigos sem detalhe por cliente).</p>
+    </div>
+
+    <div class="panel">
+      <h2>Histórico</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Mês</th><th>Pago no banco</th><th>Arrecadado clientes</th><th>Diferença</th><th>Saldo acumulado</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tbody-financeiro"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="financeiro-empty" style="display:none;">Nenhum lançamento ainda.</div>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section class="view" id="view-config">
+    <div class="panel">
+      <h2>Dados da cooperativa</h2>
+      <form class="inline" id="form-config" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <div><label for="cfg-nome">Nome</label><input type="text" id="cfg-nome"></div>
+        <div><label for="cfg-proprietario">Proprietário</label><input type="text" id="cfg-proprietario"></div>
+        <div><label for="cfg-endereco">Endereço</label><input type="text" id="cfg-endereco"></div>
+        <div><label for="cfg-empresa">Empresa instaladora</label><input type="text" id="cfg-empresa"></div>
+        <div><label for="cfg-data">Data da instalação</label><input type="date" id="cfg-data"></div>
+        <div><label for="cfg-potencia">Potência (kWh/mês)</label><input type="number" step="1" min="0" id="cfg-potencia"></div>
+        <div><label for="cfg-investido">Valor investido (R$)</label><input type="number" step="0.01" min="0" id="cfg-investido"></div>
+        <div><button type="submit" class="btn">Salvar configurações</button></div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Projeção</h2>
+      <label for="cfg-janela">Média móvel para projeção de prazo (últimos N meses)</label>
+      <select id="cfg-janela" style="max-width:220px;">
+        <option value="3">3 meses</option>
+        <option value="6" selected>6 meses</option>
+        <option value="12">12 meses</option>
+        <option value="0">Toda a história</option>
+      </select>
+      <p class="hint">Usada só para estimar o prazo restante no Dashboard — não altera os dados salvos.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const API = '/api/coop-data';
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const MES_FMT = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
+
+let state = null;
+let loaded = false;
+let chart = null;
+let mesFaturamentoAtual = null;
+
+function mesLabel(mes){
+  const [y,m] = mes.split('-').map(Number);
+  return MES_FMT.format(new Date(y, m-1, 1)).replace('.', '');
+}
+function currentMonthStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function setStatus(kind, text){
+  const dot = document.getElementById('status-dot');
+  const t = document.getElementById('status-text');
+  dot.className = 'dot' + (kind === 'err' ? ' err' : kind === 'saving' ? ' saving' : '');
+  t.textContent = text;
+}
+
+async function loadData(){
+  setStatus('saving', 'Carregando…');
+  try{
+    const res = await fetch(API);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    state = await res.json();
+    loaded = true;
+    document.getElementById('load-error').style.display = 'none';
+    setStatus('ok', 'Sincronizado');
+    render();
+  }catch(err){
+    loaded = false;
+    const el = document.getElementById('load-error');
+    el.style.display = 'block';
+    el.textContent = 'Não foi possível carregar os dados salvos (' + err.message + '). Nada será salvo até recarregar a página com sucesso, para evitar sobrescrever seus dados.';
+    setStatus('err', 'Erro ao carregar');
+  }
+}
+
+async function saveData(){
+  if(!loaded){
+    alert('Os dados ainda não foram carregados com sucesso. Recarregue a página antes de salvar, para não sobrescrever seu histórico.');
+    return false;
+  }
+  setStatus('saving', 'Salvando…');
+  try{
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    setStatus('ok', 'Sincronizado');
+    return true;
+  }catch(err){
+    setStatus('err', 'Falha ao salvar');
+    alert('Falha ao salvar: ' + err.message + '. Tente novamente.');
+    return false;
+  }
+}
+
+// ---------- cálculos ----------
+function clientesAtivos(){ return state.clientes.filter(c => c.status !== 'inativo'); }
+
+function faturamentoDoMes(mes){
+  return state.faturamento.filter(f => f.mes === mes);
+}
+
+function lucroTotalDoMes(mes){
+  return faturamentoDoMes(mes).reduce((s,f) => s + (f.valorCobrado - f.valorConcessionaria), 0);
+}
+
+function upsertFinanceiroArrecadado(mes){
+  const lucro = lucroTotalDoMes(mes);
+  let rec = state.financeiro.find(f => f.mes === mes);
+  if(rec){
+    rec.arrecadadoClientes = lucro;
+  } else {
+    state.financeiro.push({ id: 'fin-' + mes + '-' + Date.now(), mes, pagoBanco: 0, arrecadadoClientes: lucro });
+  }
+}
+
+function computeFinanceiroRows(){
+  const rows = [...state.financeiro].sort((a,b) => a.mes.localeCompare(b.mes));
+  let saldo = 0;
+  return rows.map(r => {
+    const diferenca = r.arrecadadoClientes - r.pagoBanco;
+    saldo += diferenca;
+    return { ...r, diferenca, saldoAcumulado: saldo, status: diferenca >= 0 ? 'LUCRO' : 'PREJUIZO' };
+  });
+}
+
+function render(){
+  renderDashboard();
+  renderClientes();
+  renderFaturamento();
+  renderFinanceiro();
+  renderConfigForm();
+}
+
+// ---------- dashboard ----------
+function renderDashboard(){
+  const mesAtual = currentMonthStr();
+  const finRows = computeFinanceiroRows();
+  const saldo = finRows.length ? finRows[finRows.length-1].saldoAcumulado : 0;
+  const investido = state.config.valorInvestido || 0;
+
+  document.getElementById('coop-title').textContent = state.config.nomeCooperativa || 'Cooperativa Solar';
+  document.getElementById('coop-subtitle').textContent =
+    [state.config.proprietario, state.config.endereco].filter(Boolean).join(' · ') || 'Gestão de clientes, faturamento e retorno do investimento';
+
+  document.getElementById('d-clientes').textContent = clientesAtivos().length;
+
+  const fatMes = faturamentoDoMes(mesAtual);
+  const receitaMes = fatMes.reduce((s,f) => s + f.valorCobrado, 0);
+  const lucroMes = fatMes.reduce((s,f) => s + (f.valorCobrado - f.valorConcessionaria), 0);
+  const atrasados = fatMes.filter(f => !f.pago).length;
+
+  document.getElementById('d-receita').textContent = BRL.format(receitaMes);
+  document.getElementById('d-lucro').textContent = BRL.format(lucroMes);
+  document.getElementById('d-atraso').textContent = atrasados;
+  document.getElementById('d-atraso-card').classList.toggle('warn', atrasados > 0);
+
+  const saldoCard = document.getElementById('d-saldo-card');
+  document.getElementById('d-saldo').textContent = BRL.format(saldo);
+  saldoCard.classList.toggle('pos', saldo >= 0);
+  saldoCard.classList.toggle('neg', saldo < 0);
+
+  const statusDiv = document.getElementById('dash-status');
+  const ultimo = finRows[finRows.length - 1];
+  if(ultimo){
+    statusDiv.innerHTML = `<p>Último mês lançado no financeiro (${mesLabel(ultimo.mes)}): <span class="badge ${ultimo.status === 'LUCRO' ? 'lucro' : 'prejuizo'}">${ultimo.status}</span> (diferença de ${BRL.format(ultimo.diferenca)})</p>`;
+  } else {
+    statusDiv.innerHTML = '<p>Nenhum lançamento financeiro ainda.</p>';
+  }
+
+  const bar = document.getElementById('progress-bar');
+  const barInner = bar.querySelector('div');
+  const left = document.getElementById('progress-label-left');
+  const right = document.getElementById('progress-label-right');
+
+  if(saldo < 0){
+    bar.classList.add('neg');
+    const piorSaldo = Math.min(0, ...finRows.map(r => r.saldoAcumulado));
+    const recuperadoDoFundo = piorSaldo < 0 ? (saldo - piorSaldo) / (-piorSaldo) * 100 : 0;
+    barInner.style.width = Math.max(2, Math.min(100, recuperadoDoFundo)) + '%';
+    left.textContent = 'Recuperando o prejuízo acumulado';
+    right.textContent = `Faltam ${BRL.format(-saldo)} para o break-even`;
+  } else {
+    bar.classList.remove('neg');
+    const pct = investido > 0 ? Math.min(100, saldo / investido * 100) : 0;
+    barInner.style.width = Math.max(2, pct) + '%';
+    left.textContent = 'Retorno do investimento';
+    right.textContent = `${pct.toFixed(1)}% de ${BRL.format(investido)}`;
+  }
+
+  const janela = parseInt(document.getElementById('cfg-janela').value || '6', 10);
+  const projecaoEl = document.getElementById('projecao-hint');
+  if(finRows.length < 2){
+    projecaoEl.textContent = 'Adicione pelo menos dois meses no Financeiro/ROI para ver uma projeção de prazo.';
+  } else {
+    const amostra = janela > 0 ? finRows.slice(-janela) : finRows;
+    const mediaDiferenca = amostra.reduce((s,r) => s + r.diferenca, 0) / amostra.length;
+    if(mediaDiferenca <= 0){
+      projecaoEl.textContent = `Com a média dos últimos ${amostra.length} mês(es) (${BRL.format(mediaDiferenca)}/mês), o saldo não está avançando — no ritmo atual a usina não se paga.`;
+    } else {
+      const alvo = saldo < 0 ? -saldo : Math.max(0, investido - saldo);
+      const mesesRestantes = Math.ceil(alvo / mediaDiferenca);
+      const alvoTexto = saldo < 0 ? 'o break-even (saldo zerado)' : 'a recuperação total do investimento';
+      const dataAlvo = new Date();
+      dataAlvo.setMonth(dataAlvo.getMonth() + mesesRestantes);
+      projecaoEl.textContent = `Com a média dos últimos ${amostra.length} mês(es) (${BRL.format(mediaDiferenca)}/mês), faltam cerca de ${mesesRestantes} mês(es) para ${alvoTexto} — por volta de ${MES_FMT.format(dataAlvo).replace('.', '')}.`;
+    }
+  }
+
+  renderChart(finRows);
+}
+
+function renderChart(rows){
+  const ctx = document.getElementById('chart-saldo');
+  const labels = rows.map(r => mesLabel(r.mes));
+  const saldos = rows.map(r => r.saldoAcumulado);
+  const diffs = rows.map(r => r.diferenca);
+
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar', label: 'Diferença mensal', data: diffs,
+          backgroundColor: diffs.map(d => d >= 0 ? 'rgba(31,138,95,0.55)' : 'rgba(193,67,47,0.55)'), yAxisID: 'y' },
+        { type: 'line', label: 'Saldo acumulado', data: saldos,
+          borderColor: '#136b47', backgroundColor: 'rgba(19,107,71,0.12)', borderWidth: 2, tension: 0.25, fill: true, pointRadius: 3, yAxisID: 'y' }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${BRL.format(ctx.parsed.y)}` } } },
+      scales: { y: { ticks: { callback: (v) => BRL.format(v) } } }
+    }
+  });
+}
+
+// ---------- clientes ----------
+function renderClientes(){
+  const tbody = document.getElementById('tbody-clientes');
+  tbody.innerHTML = '';
+  document.getElementById('clientes-empty').style.display = state.clientes.length ? 'none' : 'block';
+  for(const c of state.clientes){
+    const tr = document.createElement('tr');
+    tr.dataset.id = c.id;
+    tr.innerHTML = `
+      <td>${c.nome}</td>
+      <td>${c.uc || '—'}</td>
+      <td>Dia ${c.diaVencimento}</td>
+      <td>${(c.percentualDesconto*100).toFixed(0)}%</td>
+      <td><span class="badge ${c.status === 'inativo' ? 'inativo' : 'ativo'}">${c.status === 'inativo' ? 'Inativo' : 'Ativo'}</span></td>
+      <td><div class="actions-row">
+        <button class="icon-btn" data-action="toggle" title="Ativar/Inativar">🔁</button>
+        <button class="icon-btn" data-action="delete" title="Excluir">🗑️</button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+document.getElementById('tbody-clientes').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = e.target.closest('tr').dataset.id;
+  const c = state.clientes.find(x => x.id === id);
+  if(btn.dataset.action === 'toggle'){
+    c.status = c.status === 'inativo' ? 'ativo' : 'inativo';
+    if(await saveData()) render();
+  }
+  if(btn.dataset.action === 'delete'){
+    if(confirm(`Excluir o cliente ${c.nome}? Isso não remove faturamentos já lançados.`)){
+      state.clientes = state.clientes.filter(x => x.id !== id);
+      if(await saveData()) render();
+    }
+  }
+});
+
+document.getElementById('form-cliente').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nome = document.getElementById('cl-nome').value.trim();
+  const uc = document.getElementById('cl-uc').value.trim();
+  const dia = parseInt(document.getElementById('cl-dia').value, 10);
+  const desc = parseFloat(document.getElementById('cl-desc').value) / 100;
+  if(!nome || isNaN(dia) || isNaN(desc)){ alert('Preencha os campos obrigatórios.'); return; }
+  state.clientes.push({ id: 'cl-' + Date.now(), nome, uc, diaVencimento: dia, percentualDesconto: desc, status: 'ativo' });
+  if(await saveData()){ e.target.reset(); render(); }
+});
+
+// ---------- faturamento ----------
+function renderFaturamento(){
+  const mes = document.getElementById('fat-mes').value;
+  const tbody = document.getElementById('tbody-faturamento');
+  tbody.innerHTML = '';
+  if(!mes){
+    document.getElementById('faturamento-empty').style.display = 'block';
+    return;
+  }
+  const rows = state.faturamento
+    .filter(f => f.mes === mes)
+    .map(f => ({ ...f, cliente: state.clientes.find(c => c.id === f.clienteId) }))
+    .filter(f => f.cliente)
+    .sort((a,b) => a.cliente.nome.localeCompare(b.cliente.nome));
+
+  document.getElementById('faturamento-empty').style.display = rows.length ? 'none' : 'block';
+
+  for(const f of rows){
+    const lucro = f.valorCobrado - f.valorConcessionaria;
+    const tr = document.createElement('tr');
+    tr.dataset.id = f.id;
+    tr.innerHTML = `
+      <td>${f.cliente.nome}</td>
+      <td class="row-edit"><input type="number" step="0.01" min="0" data-field="valorCobrado" value="${f.valorCobrado}"></td>
+      <td class="row-edit"><input type="number" step="0.01" min="0" data-field="valorConcessionaria" value="${f.valorConcessionaria}"></td>
+      <td class="${lucro >= 0 ? 'pos' : 'neg'}" data-lucro>${BRL.format(lucro)}</td>
+      <td><input type="checkbox" data-field="pago" ${f.pago ? 'checked' : ''}></td>
+      <td><button class="icon-btn" data-action="remove-fat" title="Remover linha">🗑️</button></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+document.getElementById('fat-mes').addEventListener('change', renderFaturamento);
+
+document.getElementById('btn-gerar-mes').addEventListener('click', () => {
+  const mes = document.getElementById('fat-mes').value;
+  if(!mes){ alert('Escolha um mês.'); return; }
+  const ativos = clientesAtivos();
+  for(const c of ativos){
+    const existe = state.faturamento.find(f => f.mes === mes && f.clienteId === c.id);
+    if(!existe){
+      state.faturamento.push({ id: 'f-' + mes + '-' + c.id, clienteId: c.id, mes, valorCobrado: 0, valorConcessionaria: 0, pago: false });
+    }
+  }
+  renderFaturamento();
+});
+
+document.getElementById('tbody-faturamento').addEventListener('input', (e) => {
+  const tr = e.target.closest('tr');
+  const id = tr.dataset.id;
+  const f = state.faturamento.find(x => x.id === id);
+  const field = e.target.dataset.field;
+  if(!field) return;
+  if(field === 'pago'){
+    f.pago = e.target.checked;
+  } else {
+    f[field] = parseFloat(e.target.value) || 0;
+    const lucro = f.valorCobrado - f.valorConcessionaria;
+    const lucroCell = tr.querySelector('[data-lucro]');
+    lucroCell.textContent = BRL.format(lucro);
+    lucroCell.className = lucro >= 0 ? 'pos' : 'neg';
+  }
+});
+
+document.getElementById('tbody-faturamento').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action="remove-fat"]');
+  if(!btn) return;
+  const tr = e.target.closest('tr');
+  const id = tr.dataset.id;
+  state.faturamento = state.faturamento.filter(x => x.id !== id);
+  tr.remove();
+});
+
+document.getElementById('btn-salvar-fat').addEventListener('click', async () => {
+  const mes = document.getElementById('fat-mes').value;
+  if(!mes){ alert('Escolha um mês.'); return; }
+  upsertFinanceiroArrecadado(mes);
+  if(await saveData()) render();
+});
+
+// ---------- financeiro ----------
+function renderFinanceiro(){
+  const rows = computeFinanceiroRows().slice().reverse();
+  const tbody = document.getElementById('tbody-financeiro');
+  tbody.innerHTML = '';
+  document.getElementById('financeiro-empty').style.display = rows.length ? 'none' : 'block';
+  for(const r of rows){
+    const tr = document.createElement('tr');
+    tr.dataset.id = r.id;
+    tr.innerHTML = `
+      <td>${mesLabel(r.mes)}</td>
+      <td>${BRL.format(r.pagoBanco)}</td>
+      <td>${BRL.format(r.arrecadadoClientes)}</td>
+      <td class="${r.diferenca >= 0 ? 'pos' : 'neg'}">${BRL.format(r.diferenca)}</td>
+      <td class="${r.saldoAcumulado >= 0 ? 'pos' : 'neg'}">${BRL.format(r.saldoAcumulado)}</td>
+      <td><span class="badge ${r.status === 'LUCRO' ? 'lucro' : 'prejuizo'}">${r.status}</span></td>
+      <td><div class="actions-row">
+        <button class="icon-btn" data-action="edit" title="Editar">✏️</button>
+        <button class="icon-btn" data-action="delete" title="Excluir">🗑️</button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function startEditFinanceiro(id){
+  const r = state.financeiro.find(x => x.id === id);
+  if(!r) return;
+  const tr = document.querySelector(`#tbody-financeiro tr[data-id="${CSS.escape(id)}"]`);
+  tr.innerHTML = `
+    <td>${mesLabel(r.mes)}</td>
+    <td class="row-edit"><input type="number" step="0.01" id="edit-pago" value="${r.pagoBanco}"></td>
+    <td class="row-edit"><input type="number" step="0.01" id="edit-arrecadado" value="${r.arrecadadoClientes}"></td>
+    <td colspan="3"></td>
+    <td><div class="actions-row">
+      <button class="icon-btn" data-action="save-edit" title="Salvar">💾</button>
+      <button class="icon-btn" data-action="cancel-edit" title="Cancelar">✖️</button>
+    </div></td>`;
+  tr.querySelector('[data-action="save-edit"]').onclick = async () => {
+    const pago = parseFloat(document.getElementById('edit-pago').value);
+    const arrecadado = parseFloat(document.getElementById('edit-arrecadado').value);
+    if(isNaN(pago) || isNaN(arrecadado)){ alert('Valores inválidos.'); return; }
+    r.pagoBanco = pago;
+    r.arrecadadoClientes = arrecadado;
+    if(await saveData()) render();
+  };
+  tr.querySelector('[data-action="cancel-edit"]').onclick = () => render();
+}
+
+document.getElementById('tbody-financeiro').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const tr = e.target.closest('tr');
+  const id = tr.dataset.id;
+  if(btn.dataset.action === 'edit') startEditFinanceiro(id);
+  if(btn.dataset.action === 'delete'){
+    const r = state.financeiro.find(x => x.id === id);
+    if(confirm(`Excluir o lançamento de ${mesLabel(r.mes)}?`)){
+      state.financeiro = state.financeiro.filter(x => x.id !== id);
+      saveData().then(ok => { if(ok) render(); });
+    }
+  }
+});
+
+document.getElementById('form-financeiro').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const mes = document.getElementById('fin-mes').value;
+  const pago = parseFloat(document.getElementById('fin-pago').value);
+  if(!mes || isNaN(pago)){ alert('Preencha todos os campos.'); return; }
+  let rec = state.financeiro.find(x => x.mes === mes);
+  if(rec){
+    rec.pagoBanco = pago;
+  } else {
+    state.financeiro.push({ id: 'fin-' + mes + '-' + Date.now(), mes, pagoBanco: pago, arrecadadoClientes: lucroTotalDoMes(mes) });
+  }
+  if(await saveData()){ e.target.reset(); render(); }
+});
+
+// ---------- config ----------
+function renderConfigForm(){
+  const c = state.config;
+  document.getElementById('cfg-nome').value = c.nomeCooperativa || '';
+  document.getElementById('cfg-proprietario').value = c.proprietario || '';
+  document.getElementById('cfg-endereco').value = c.endereco || '';
+  document.getElementById('cfg-empresa').value = c.empresaInstaladora || '';
+  document.getElementById('cfg-data').value = c.dataInstalacao || '';
+  document.getElementById('cfg-potencia').value = c.potenciaUsina ?? '';
+  document.getElementById('cfg-investido').value = c.valorInvestido ?? '';
+}
+
+document.getElementById('form-config').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  state.config = {
+    nomeCooperativa: document.getElementById('cfg-nome').value.trim(),
+    proprietario: document.getElementById('cfg-proprietario').value.trim(),
+    endereco: document.getElementById('cfg-endereco').value.trim(),
+    empresaInstaladora: document.getElementById('cfg-empresa').value.trim(),
+    dataInstalacao: document.getElementById('cfg-data').value,
+    potenciaUsina: parseFloat(document.getElementById('cfg-potencia').value) || 0,
+    valorInvestido: parseFloat(document.getElementById('cfg-investido').value) || 0,
+  };
+  if(await saveData()) render();
+});
+
+document.getElementById('cfg-janela').addEventListener('change', renderDashboard);
+
+// navegação
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+  });
+});
+
+function setDefaultMonths(){
+  const atual = currentMonthStr();
+  document.getElementById('fat-mes').value = atual;
+
+  const rows = state.financeiro.slice().sort((a,b) => a.mes.localeCompare(b.mes));
+  let proximo = atual;
+  if(rows.length){
+    const [y,m] = rows[rows.length-1].mes.split('-').map(Number);
+    const d = new Date(y, m, 1);
+    proximo = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  document.getElementById('fin-mes').value = proximo;
+}
+
+loadData().then(() => { if(state){ setDefaultMonths(); renderFaturamento(); } });
+</script>
+</body>
+</html>

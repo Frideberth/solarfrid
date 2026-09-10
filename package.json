@@ -1,0 +1,9 @@
+{
+  "name": "coop-solar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App de gestão da cooperativa de energia solar (clientes, faturamento, financeiro/ROI).",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
