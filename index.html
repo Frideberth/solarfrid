@@ -168,6 +168,18 @@
   <!-- FATURAMENTO -->
   <section class="view" id="view-faturamento">
     <div class="panel">
+      <h2>Histórico por mês</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Mês</th><th>Clientes</th><th>Total cobrado</th><th>Lucro total</th><th>Pagos</th><th></th></tr></thead>
+          <tbody id="tbody-fat-historico"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="fat-historico-empty" style="display:none;">Nenhum mês lançado ainda.</div>
+      <p class="hint">Clique no ícone para abrir o detalhe por cliente daquele mês, igual às abas da sua planilha.</p>
+    </div>
+
+    <div class="panel" id="painel-faturamento-mes">
       <div class="panel-head">
         <h2>Faturamento do mês</h2>
         <div style="display:flex;gap:8px;align-items:end;">
@@ -341,6 +353,7 @@ function computeFinanceiroRows(){
 function render(){
   renderDashboard();
   renderClientes();
+  renderFaturamentoHistorico();
   renderFaturamento();
   renderFinanceiro();
   renderConfigForm();
@@ -501,6 +514,48 @@ document.getElementById('form-cliente').addEventListener('submit', async (e) => 
 });
 
 // ---------- faturamento ----------
+function resumoFaturamentoPorMes(){
+  const map = {};
+  for(const f of state.faturamento){
+    if(!map[f.mes]) map[f.mes] = { mes: f.mes, totalCobrado: 0, totalLucro: 0, total: 0, pagos: 0 };
+    const m = map[f.mes];
+    m.totalCobrado += f.valorCobrado;
+    m.totalLucro += (f.valorCobrado - f.valorConcessionaria);
+    m.total += 1;
+    if(f.pago) m.pagos += 1;
+  }
+  return Object.values(map).sort((a,b) => b.mes.localeCompare(a.mes));
+}
+
+function renderFaturamentoHistorico(){
+  const rows = resumoFaturamentoPorMes();
+  const tbody = document.getElementById('tbody-fat-historico');
+  tbody.innerHTML = '';
+  document.getElementById('fat-historico-empty').style.display = rows.length ? 'none' : 'block';
+  const mesSelecionado = document.getElementById('fat-mes').value;
+  for(const r of rows){
+    const tr = document.createElement('tr');
+    if(r.mes === mesSelecionado) tr.style.background = '#f0f7f3';
+    tr.innerHTML = `
+      <td>${mesLabel(r.mes)}</td>
+      <td>${r.total}</td>
+      <td>${BRL.format(r.totalCobrado)}</td>
+      <td class="${r.totalLucro >= 0 ? 'pos' : 'neg'}">${BRL.format(r.totalLucro)}</td>
+      <td>${r.pagos}/${r.total}</td>
+      <td><button class="icon-btn" data-mes="${r.mes}" data-action="ver-mes" title="Ver / editar este mês">👁️</button></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+document.getElementById('tbody-fat-historico').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action="ver-mes"]');
+  if(!btn) return;
+  document.getElementById('fat-mes').value = btn.dataset.mes;
+  renderFaturamento();
+  renderFaturamentoHistorico();
+  document.getElementById('painel-faturamento-mes').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
 function renderFaturamento(){
   const mes = document.getElementById('fat-mes').value;
   const tbody = document.getElementById('tbody-faturamento');
@@ -532,7 +587,7 @@ function renderFaturamento(){
   }
 }
 
-document.getElementById('fat-mes').addEventListener('change', renderFaturamento);
+document.getElementById('fat-mes').addEventListener('change', () => { renderFaturamento(); renderFaturamentoHistorico(); });
 
 document.getElementById('btn-gerar-mes').addEventListener('click', () => {
   const mes = document.getElementById('fat-mes').value;
@@ -545,6 +600,7 @@ document.getElementById('btn-gerar-mes').addEventListener('click', () => {
     }
   }
   renderFaturamento();
+  renderFaturamentoHistorico();
 });
 
 document.getElementById('tbody-faturamento').addEventListener('input', (e) => {
@@ -562,6 +618,7 @@ document.getElementById('tbody-faturamento').addEventListener('input', (e) => {
     lucroCell.textContent = BRL.format(lucro);
     lucroCell.className = lucro >= 0 ? 'pos' : 'neg';
   }
+  renderFaturamentoHistorico();
 });
 
 document.getElementById('tbody-faturamento').addEventListener('click', (e) => {
@@ -571,6 +628,7 @@ document.getElementById('tbody-faturamento').addEventListener('click', (e) => {
   const id = tr.dataset.id;
   state.faturamento = state.faturamento.filter(x => x.id !== id);
   tr.remove();
+  renderFaturamentoHistorico();
 });
 
 document.getElementById('btn-salvar-fat').addEventListener('click', async () => {
@@ -709,7 +767,7 @@ function setDefaultMonths(){
   document.getElementById('fin-mes').value = proximo;
 }
 
-loadData().then(() => { if(state){ setDefaultMonths(); renderFaturamento(); } });
+loadData().then(() => { if(state){ setDefaultMonths(); renderFaturamento(); renderFaturamentoHistorico(); } });
 </script>
 </body>
 </html>
