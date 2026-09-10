@@ -149,6 +149,7 @@
         <div><label for="cl-uc">Número UC</label><input type="text" id="cl-uc"></div>
         <div><label for="cl-dia">Dia de vencimento</label><input type="number" id="cl-dia" min="1" max="31" required></div>
         <div><label for="cl-desc">% de desconto</label><input type="number" id="cl-desc" min="0" max="100" step="0.1" required></div>
+        <div><label for="cl-ilum">Iluminação pública (R$)</label><input type="number" id="cl-ilum" min="0" step="0.01" value="0"></div>
         <div><button type="submit" class="btn">Adicionar</button></div>
       </form>
     </div>
@@ -157,11 +158,12 @@
       <h2>Clientes cadastrados</h2>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Nome</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Nome</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Ilum. pública</th><th>Status</th><th></th></tr></thead>
           <tbody id="tbody-clientes"></tbody>
         </table>
       </div>
       <div class="empty" id="clientes-empty" style="display:none;">Nenhum cliente cadastrado.</div>
+      <p class="hint">Confira o % de desconto e a iluminação pública de cada cliente na conta real dele — esses dois valores entram direto no cálculo do Faturamento.</p>
     </div>
   </section>
 
@@ -189,7 +191,7 @@
       </div>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Cliente</th><th>Cobrado (R$)</th><th>Concessionária (R$)</th><th>Lucro</th><th>Pago</th><th></th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Consumo (kWh)</th><th>Bandeira (R$)</th><th>Cobrado (calculado)</th><th>Concessionária (R$)</th><th>Lucro</th><th>Pago</th><th></th></tr></thead>
           <tbody id="tbody-faturamento"></tbody>
         </table>
       </div>
@@ -237,6 +239,16 @@
         <div><label for="cfg-investido">Valor investido (R$)</label><input type="number" step="0.01" min="0" id="cfg-investido"></div>
         <div><button type="submit" class="btn">Salvar configurações</button></div>
       </form>
+    </div>
+
+    <div class="panel">
+      <h2>Tarifas da concessionária</h2>
+      <form class="inline" id="form-tarifas" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <div><label for="cfg-tarifa-consumo">Energia elét. consumo (R$/kWh)</label><input type="number" step="0.000001" min="0" id="cfg-tarifa-consumo"></div>
+        <div><label for="cfg-tarifa-sistema">Energia elét. uso do sistema (R$/kWh)</label><input type="number" step="0.000001" min="0" id="cfg-tarifa-sistema"></div>
+        <div><button type="submit" class="btn">Salvar tarifas</button></div>
+      </form>
+      <p class="hint">Tiradas da conta de luz — mudam raramente (reajuste da COPEL). Usadas para calcular o valor cobrado no Faturamento junto com o % de desconto e a iluminação pública de cada cliente.</p>
     </div>
 
     <div class="panel">
@@ -476,8 +488,10 @@ function renderClientes(){
       <td>${c.uc || '—'}</td>
       <td>Dia ${c.diaVencimento}</td>
       <td>${(c.percentualDesconto*100).toFixed(0)}%</td>
+      <td>${BRL.format(c.iluminacaoPublica || 0)}</td>
       <td><span class="badge ${c.status === 'inativo' ? 'inativo' : 'ativo'}">${c.status === 'inativo' ? 'Inativo' : 'Ativo'}</span></td>
       <td><div class="actions-row">
+        <button class="icon-btn" data-action="edit" title="Editar">✏️</button>
         <button class="icon-btn" data-action="toggle" title="Ativar/Inativar">🔁</button>
         <button class="icon-btn" data-action="delete" title="Excluir">🗑️</button>
       </div></td>`;
@@ -485,11 +499,40 @@ function renderClientes(){
   }
 }
 
+function startEditCliente(id){
+  const c = state.clientes.find(x => x.id === id);
+  if(!c) return;
+  const tr = document.querySelector(`#tbody-clientes tr[data-id="${CSS.escape(id)}"]`);
+  tr.innerHTML = `
+    <td class="row-edit"><input type="text" id="edit-cl-nome" value="${c.nome}"></td>
+    <td class="row-edit"><input type="text" id="edit-cl-uc" value="${c.uc || ''}"></td>
+    <td class="row-edit"><input type="number" id="edit-cl-dia" min="1" max="31" value="${c.diaVencimento}"></td>
+    <td class="row-edit"><input type="number" id="edit-cl-desc" min="0" max="100" step="0.1" value="${(c.percentualDesconto*100)}"></td>
+    <td class="row-edit"><input type="number" id="edit-cl-ilum" min="0" step="0.01" value="${c.iluminacaoPublica || 0}"></td>
+    <td colspan="1"></td>
+    <td><div class="actions-row">
+      <button class="icon-btn" data-action="save-edit" title="Salvar">💾</button>
+      <button class="icon-btn" data-action="cancel-edit" title="Cancelar">✖️</button>
+    </div></td>`;
+  tr.querySelector('[data-action="save-edit"]').onclick = async () => {
+    const nome = document.getElementById('edit-cl-nome').value.trim();
+    const uc = document.getElementById('edit-cl-uc').value.trim();
+    const dia = parseInt(document.getElementById('edit-cl-dia').value, 10);
+    const desc = parseFloat(document.getElementById('edit-cl-desc').value) / 100;
+    const ilum = parseFloat(document.getElementById('edit-cl-ilum').value) || 0;
+    if(!nome || isNaN(dia) || isNaN(desc)){ alert('Valores inválidos.'); return; }
+    c.nome = nome; c.uc = uc; c.diaVencimento = dia; c.percentualDesconto = desc; c.iluminacaoPublica = ilum;
+    if(await saveData()) render();
+  };
+  tr.querySelector('[data-action="cancel-edit"]').onclick = () => render();
+}
+
 document.getElementById('tbody-clientes').addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
   if(!btn) return;
   const id = e.target.closest('tr').dataset.id;
   const c = state.clientes.find(x => x.id === id);
+  if(btn.dataset.action === 'edit') startEditCliente(id);
   if(btn.dataset.action === 'toggle'){
     c.status = c.status === 'inativo' ? 'ativo' : 'inativo';
     if(await saveData()) render();
@@ -508,8 +551,9 @@ document.getElementById('form-cliente').addEventListener('submit', async (e) => 
   const uc = document.getElementById('cl-uc').value.trim();
   const dia = parseInt(document.getElementById('cl-dia').value, 10);
   const desc = parseFloat(document.getElementById('cl-desc').value) / 100;
+  const ilum = parseFloat(document.getElementById('cl-ilum').value) || 0;
   if(!nome || isNaN(dia) || isNaN(desc)){ alert('Preencha os campos obrigatórios.'); return; }
-  state.clientes.push({ id: 'cl-' + Date.now(), nome, uc, diaVencimento: dia, percentualDesconto: desc, status: 'ativo' });
+  state.clientes.push({ id: 'cl-' + Date.now(), nome, uc, diaVencimento: dia, percentualDesconto: desc, iluminacaoPublica: ilum, status: 'ativo' });
   if(await saveData()){ e.target.reset(); render(); }
 });
 
@@ -556,6 +600,13 @@ document.getElementById('tbody-fat-historico').addEventListener('click', (e) => 
   document.getElementById('painel-faturamento-mes').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
+function calcularValorCobrado(cliente, consumoKwh, bandeira){
+  const tarifa = (state.config.tarifaConsumo || 0) + (state.config.tarifaUsoSistema || 0);
+  const desconto = cliente.percentualDesconto || 0;
+  const base = tarifa * (1 - desconto) * (consumoKwh || 0);
+  return base + (cliente.iluminacaoPublica || 0) + (bandeira || 0);
+}
+
 function renderFaturamento(){
   const mes = document.getElementById('fat-mes').value;
   const tbody = document.getElementById('tbody-faturamento');
@@ -573,12 +624,16 @@ function renderFaturamento(){
   document.getElementById('faturamento-empty').style.display = rows.length ? 'none' : 'block';
 
   for(const f of rows){
-    const lucro = f.valorCobrado - f.valorConcessionaria;
+    const cobrado = calcularValorCobrado(f.cliente, f.consumoKwh, f.bandeira);
+    f.valorCobrado = cobrado; // mantém o state em sincronia com o que está na tela
+    const lucro = cobrado - f.valorConcessionaria;
     const tr = document.createElement('tr');
     tr.dataset.id = f.id;
     tr.innerHTML = `
       <td>${f.cliente.nome}</td>
-      <td class="row-edit"><input type="number" step="0.01" min="0" data-field="valorCobrado" value="${f.valorCobrado}"></td>
+      <td class="row-edit"><input type="number" step="1" min="0" data-field="consumoKwh" value="${f.consumoKwh || 0}"></td>
+      <td class="row-edit"><input type="number" step="0.01" min="0" data-field="bandeira" value="${f.bandeira || 0}"></td>
+      <td class="${cobrado >= 0 ? 'pos' : 'neg'}" data-cobrado>${BRL.format(cobrado)}</td>
       <td class="row-edit"><input type="number" step="0.01" min="0" data-field="valorConcessionaria" value="${f.valorConcessionaria}"></td>
       <td class="${lucro >= 0 ? 'pos' : 'neg'}" data-lucro>${BRL.format(lucro)}</td>
       <td><input type="checkbox" data-field="pago" ${f.pago ? 'checked' : ''}></td>
@@ -596,7 +651,7 @@ document.getElementById('btn-gerar-mes').addEventListener('click', () => {
   for(const c of ativos){
     const existe = state.faturamento.find(f => f.mes === mes && f.clienteId === c.id);
     if(!existe){
-      state.faturamento.push({ id: 'f-' + mes + '-' + c.id, clienteId: c.id, mes, valorCobrado: 0, valorConcessionaria: 0, pago: false });
+      state.faturamento.push({ id: 'f-' + mes + '-' + c.id, clienteId: c.id, mes, consumoKwh: 0, bandeira: 0, valorCobrado: 0, valorConcessionaria: 0, pago: false });
     }
   }
   renderFaturamento();
@@ -607,13 +662,19 @@ document.getElementById('tbody-faturamento').addEventListener('input', (e) => {
   const tr = e.target.closest('tr');
   const id = tr.dataset.id;
   const f = state.faturamento.find(x => x.id === id);
+  const cliente = state.clientes.find(c => c.id === f.clienteId);
   const field = e.target.dataset.field;
   if(!field) return;
   if(field === 'pago'){
     f.pago = e.target.checked;
   } else {
     f[field] = parseFloat(e.target.value) || 0;
-    const lucro = f.valorCobrado - f.valorConcessionaria;
+    const cobrado = calcularValorCobrado(cliente, f.consumoKwh, f.bandeira);
+    f.valorCobrado = cobrado;
+    const lucro = cobrado - f.valorConcessionaria;
+    const cobradoCell = tr.querySelector('[data-cobrado]');
+    cobradoCell.textContent = BRL.format(cobrado);
+    cobradoCell.className = cobrado >= 0 ? 'pos' : 'neg';
     const lucroCell = tr.querySelector('[data-lucro]');
     lucroCell.textContent = BRL.format(lucro);
     lucroCell.className = lucro >= 0 ? 'pos' : 'neg';
@@ -725,11 +786,14 @@ function renderConfigForm(){
   document.getElementById('cfg-data').value = c.dataInstalacao || '';
   document.getElementById('cfg-potencia').value = c.potenciaUsina ?? '';
   document.getElementById('cfg-investido').value = c.valorInvestido ?? '';
+  document.getElementById('cfg-tarifa-consumo').value = c.tarifaConsumo ?? '';
+  document.getElementById('cfg-tarifa-sistema').value = c.tarifaUsoSistema ?? '';
 }
 
 document.getElementById('form-config').addEventListener('submit', async (e) => {
   e.preventDefault();
   state.config = {
+    ...state.config,
     nomeCooperativa: document.getElementById('cfg-nome').value.trim(),
     proprietario: document.getElementById('cfg-proprietario').value.trim(),
     endereco: document.getElementById('cfg-endereco').value.trim(),
@@ -737,6 +801,16 @@ document.getElementById('form-config').addEventListener('submit', async (e) => {
     dataInstalacao: document.getElementById('cfg-data').value,
     potenciaUsina: parseFloat(document.getElementById('cfg-potencia').value) || 0,
     valorInvestido: parseFloat(document.getElementById('cfg-investido').value) || 0,
+  };
+  if(await saveData()) render();
+});
+
+document.getElementById('form-tarifas').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  state.config = {
+    ...state.config,
+    tarifaConsumo: parseFloat(document.getElementById('cfg-tarifa-consumo').value) || 0,
+    tarifaUsoSistema: parseFloat(document.getElementById('cfg-tarifa-sistema').value) || 0,
   };
   if(await saveData()) render();
 });
