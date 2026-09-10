@@ -78,7 +78,11 @@ const HEADERS = {
 
 exports.handler = async (event) => {
   try {
-    const store = getStore('coop-solar');
+    const store = getStore({
+      name: 'coop-solar',
+      siteID: process.env.BLOBS_SITE_ID || process.env.SITE_ID,
+      token: process.env.BLOBS_TOKEN,
+    });
 
     if (event.httpMethod === 'GET') {
       let data = await store.get('data', { type: 'json' });
