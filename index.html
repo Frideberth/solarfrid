@@ -89,6 +89,10 @@
   .hint{font-size:.78rem;color:var(--muted);margin-top:6px;}
   .banner{background:var(--red-bg);color:var(--red);border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:16px;}
   .row-edit input{width:100px;}
+  .month-tabs{display:flex;gap:6px;overflow-x:auto;margin:2px 0 16px;padding-bottom:2px;}
+  .month-tabs button{flex:0 0 auto;border:1px solid var(--border);background:#fff;color:var(--muted);padding:7px 12px;border-radius:999px;font-size:.82rem;font-weight:600;cursor:pointer;}
+  .month-tabs button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .month-tabs button.has-data:not(.active){border-color:var(--accent);color:var(--accent-dark);}
   @media (max-width:560px){
     .row-edit input{width:80px;}
     th,td{font-size:.76rem;padding:7px 5px;}
@@ -106,7 +110,7 @@
 <nav>
   <button data-view="dashboard" class="active">Dashboard</button>
   <button data-view="clientes">Clientes</button>
-  <button data-view="faturamento">Faturamento</button>
+  <button data-view="faturamento">Contas</button>
   <button data-view="financeiro">Financeiro / ROI</button>
   <button data-view="config">Configurações</button>
 </nav>
@@ -146,8 +150,9 @@
       <h2>Novo cliente</h2>
       <form class="inline" id="form-cliente">
         <div><label for="cl-nome">Nome</label><input type="text" id="cl-nome" required></div>
-        <div><label for="cl-uc">Número UC</label><input type="text" id="cl-uc"></div>
-        <div><label for="cl-dia">Dia de vencimento</label><input type="number" id="cl-dia" min="1" max="31" required></div>
+        <div><label for="cl-endereco">Endereço</label><input type="text" id="cl-endereco"></div>
+        <div><label for="cl-uc">Unidade Consumidora</label><input type="text" id="cl-uc"></div>
+        <div><label for="cl-dia">Vencimento</label><input type="number" id="cl-dia" min="1" max="31" required></div>
         <div><label for="cl-desc">% de desconto</label><input type="number" id="cl-desc" min="0" max="100" step="0.1" required></div>
         <div><label for="cl-ilum">Iluminação pública (R$)</label><input type="number" id="cl-ilum" min="0" step="0.01" value="0"></div>
         <div><button type="submit" class="btn">Adicionar</button></div>
@@ -158,7 +163,7 @@
       <h2>Clientes cadastrados</h2>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Nome</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Ilum. pública</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Nome</th><th>Endereço</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Ilum. pública</th><th>Status</th><th></th></tr></thead>
           <tbody id="tbody-clientes"></tbody>
         </table>
       </div>
@@ -167,7 +172,7 @@
     </div>
   </section>
 
-  <!-- FATURAMENTO -->
+  <!-- CONTAS -->
   <section class="view" id="view-faturamento">
     <div class="panel">
       <h2>Histórico por mês</h2>
@@ -178,26 +183,28 @@
         </table>
       </div>
       <div class="empty" id="fat-historico-empty" style="display:none;">Nenhum mês lançado ainda.</div>
-      <p class="hint">Clique no ícone para abrir o detalhe por cliente daquele mês, igual às abas da sua planilha.</p>
+      <p class="hint">Clique no ícone para abrir o demonstrativo daquele mês abaixo.</p>
     </div>
 
     <div class="panel" id="painel-faturamento-mes">
       <div class="panel-head">
-        <h2>Faturamento do mês</h2>
+        <h2>Demonstrativo do mês</h2>
         <div style="display:flex;gap:8px;align-items:end;">
-          <div><label for="fat-mes">Mês</label><input type="month" id="fat-mes"></div>
+          <input type="hidden" id="fat-mes">
+          <div><label for="fat-ano">Ano</label><select id="fat-ano"></select></div>
           <button class="btn secondary" id="btn-gerar-mes">Carregar / gerar mês</button>
         </div>
       </div>
+      <div class="month-tabs" id="month-tabs"></div>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Cliente</th><th>Consumo (kWh)</th><th>Bandeira (R$)</th><th>Cobrado (calculado)</th><th>Concessionária (R$)</th><th>Lucro</th><th>Pago</th><th></th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Tarifa (R$/kWh)</th><th>Desconto</th><th>Consumo (kWh)</th><th>Ilum. pública</th><th>Bandeira (R$)</th><th>Cobrado (calculado)</th><th>Concessionária (R$)</th><th>Lucro</th><th>Pago</th><th></th></tr></thead>
           <tbody id="tbody-faturamento"></tbody>
         </table>
       </div>
       <div class="empty" id="faturamento-empty" style="display:none;">Escolha um mês e clique em "Carregar / gerar mês".</div>
-      <p class="hint">Os valores de cada cliente vêm da conta da concessionária. "Lucro" é calculado automaticamente (cobrado − concessionária) e alimenta o Financeiro/ROI do mês.</p>
-      <div style="margin-top:12px;"><button class="btn" id="btn-salvar-fat">Salvar faturamento do mês</button></div>
+      <p class="hint">Demonstrativo completo por cliente, igual à conta de luz: tarifa e desconto vêm da configuração/cadastro, consumo e bandeira são lançados aqui. "Lucro" é calculado automaticamente (cobrado − concessionária) e alimenta o Financeiro/ROI do mês.</p>
+      <div style="margin-top:12px;"><button class="btn" id="btn-salvar-fat">Salvar contas do mês</button></div>
     </div>
   </section>
 
@@ -485,6 +492,7 @@ function renderClientes(){
     tr.dataset.id = c.id;
     tr.innerHTML = `
       <td>${c.nome}</td>
+      <td>${c.endereco || '—'}</td>
       <td>${c.uc || '—'}</td>
       <td>Dia ${c.diaVencimento}</td>
       <td>${(c.percentualDesconto*100).toFixed(0)}%</td>
@@ -505,6 +513,7 @@ function startEditCliente(id){
   const tr = document.querySelector(`#tbody-clientes tr[data-id="${CSS.escape(id)}"]`);
   tr.innerHTML = `
     <td class="row-edit"><input type="text" id="edit-cl-nome" value="${c.nome}"></td>
+    <td class="row-edit"><input type="text" id="edit-cl-endereco" value="${c.endereco || ''}"></td>
     <td class="row-edit"><input type="text" id="edit-cl-uc" value="${c.uc || ''}"></td>
     <td class="row-edit"><input type="number" id="edit-cl-dia" min="1" max="31" value="${c.diaVencimento}"></td>
     <td class="row-edit"><input type="number" id="edit-cl-desc" min="0" max="100" step="0.1" value="${(c.percentualDesconto*100)}"></td>
@@ -516,12 +525,13 @@ function startEditCliente(id){
     </div></td>`;
   tr.querySelector('[data-action="save-edit"]').onclick = async () => {
     const nome = document.getElementById('edit-cl-nome').value.trim();
+    const endereco = document.getElementById('edit-cl-endereco').value.trim();
     const uc = document.getElementById('edit-cl-uc').value.trim();
     const dia = parseInt(document.getElementById('edit-cl-dia').value, 10);
     const desc = parseFloat(document.getElementById('edit-cl-desc').value) / 100;
     const ilum = parseFloat(document.getElementById('edit-cl-ilum').value) || 0;
     if(!nome || isNaN(dia) || isNaN(desc)){ alert('Valores inválidos.'); return; }
-    c.nome = nome; c.uc = uc; c.diaVencimento = dia; c.percentualDesconto = desc; c.iluminacaoPublica = ilum;
+    c.nome = nome; c.endereco = endereco; c.uc = uc; c.diaVencimento = dia; c.percentualDesconto = desc; c.iluminacaoPublica = ilum;
     if(await saveData()) render();
   };
   tr.querySelector('[data-action="cancel-edit"]').onclick = () => render();
@@ -548,12 +558,13 @@ document.getElementById('tbody-clientes').addEventListener('click', async (e) =>
 document.getElementById('form-cliente').addEventListener('submit', async (e) => {
   e.preventDefault();
   const nome = document.getElementById('cl-nome').value.trim();
+  const endereco = document.getElementById('cl-endereco').value.trim();
   const uc = document.getElementById('cl-uc').value.trim();
   const dia = parseInt(document.getElementById('cl-dia').value, 10);
   const desc = parseFloat(document.getElementById('cl-desc').value) / 100;
   const ilum = parseFloat(document.getElementById('cl-ilum').value) || 0;
   if(!nome || isNaN(dia) || isNaN(desc)){ alert('Preencha os campos obrigatórios.'); return; }
-  state.clientes.push({ id: 'cl-' + Date.now(), nome, uc, diaVencimento: dia, percentualDesconto: desc, iluminacaoPublica: ilum, status: 'ativo' });
+  state.clientes.push({ id: 'cl-' + Date.now(), nome, endereco, uc, diaVencimento: dia, percentualDesconto: desc, iluminacaoPublica: ilum, status: 'ativo' });
   if(await saveData()){ e.target.reset(); render(); }
 });
 
@@ -595,6 +606,8 @@ document.getElementById('tbody-fat-historico').addEventListener('click', (e) => 
   const btn = e.target.closest('button[data-action="ver-mes"]');
   if(!btn) return;
   document.getElementById('fat-mes').value = btn.dataset.mes;
+  renderYearSelect();
+  renderMonthTabs();
   renderFaturamento();
   renderFaturamentoHistorico();
   document.getElementById('painel-faturamento-mes').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -607,6 +620,54 @@ function calcularValorCobrado(cliente, consumoKwh, bandeira){
   return base + (cliente.iluminacaoPublica || 0) + (bandeira || 0);
 }
 
+const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function anosDisponiveis(){
+  const anos = new Set([new Date().getFullYear()]);
+  for(const f of state.faturamento) anos.add(parseInt(f.mes.split('-')[0], 10));
+  for(const r of state.financeiro) anos.add(parseInt(r.mes.split('-')[0], 10));
+  return Array.from(anos).sort((a,b) => a - b);
+}
+
+function renderYearSelect(){
+  const mes = document.getElementById('fat-mes').value;
+  const anoAtual = mes ? parseInt(mes.split('-')[0], 10) : new Date().getFullYear();
+  const sel = document.getElementById('fat-ano');
+  sel.innerHTML = anosDisponiveis().map(a => `<option value="${a}" ${a === anoAtual ? 'selected' : ''}>${a}</option>`).join('');
+}
+
+function renderMonthTabs(){
+  const mes = document.getElementById('fat-mes').value;
+  const [anoStr, mesStr] = mes ? mes.split('-') : [String(new Date().getFullYear()), ''];
+  const mesAtivo = mesStr ? parseInt(mesStr, 10) : 0;
+  const wrap = document.getElementById('month-tabs');
+  wrap.innerHTML = MESES_ABREV.map((nome, idx) => {
+    const mm = String(idx + 1).padStart(2, '0');
+    const mesRef = `${anoStr}-${mm}`;
+    const temDados = state.faturamento.some(f => f.mes === mesRef);
+    const classes = ['', mesAtivo === idx + 1 ? 'active' : '', temDados ? 'has-data' : ''].filter(Boolean).join(' ');
+    return `<button type="button" class="${classes}" data-mes="${mesRef}">${nome}</button>`;
+  }).join('');
+}
+
+document.getElementById('month-tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-mes]');
+  if(!btn) return;
+  document.getElementById('fat-mes').value = btn.dataset.mes;
+  renderMonthTabs();
+  renderFaturamento();
+  renderFaturamentoHistorico();
+});
+
+document.getElementById('fat-ano').addEventListener('change', (e) => {
+  const mes = document.getElementById('fat-mes').value;
+  const mm = mes ? mes.split('-')[1] : '01';
+  document.getElementById('fat-mes').value = `${e.target.value}-${mm}`;
+  renderMonthTabs();
+  renderFaturamento();
+  renderFaturamentoHistorico();
+});
+
 function renderFaturamento(){
   const mes = document.getElementById('fat-mes').value;
   const tbody = document.getElementById('tbody-faturamento');
@@ -615,6 +676,7 @@ function renderFaturamento(){
     document.getElementById('faturamento-empty').style.display = 'block';
     return;
   }
+  const tarifaTotal = (state.config.tarifaConsumo || 0) + (state.config.tarifaUsoSistema || 0);
   const rows = state.faturamento
     .filter(f => f.mes === mes)
     .map(f => ({ ...f, cliente: state.clientes.find(c => c.id === f.clienteId) }))
@@ -631,7 +693,10 @@ function renderFaturamento(){
     tr.dataset.id = f.id;
     tr.innerHTML = `
       <td>${f.cliente.nome}</td>
+      <td>R$ ${tarifaTotal.toFixed(6)}</td>
+      <td>${(f.cliente.percentualDesconto * 100).toFixed(0)}%</td>
       <td class="row-edit"><input type="number" step="1" min="0" data-field="consumoKwh" value="${f.consumoKwh || 0}"></td>
+      <td>${BRL.format(f.cliente.iluminacaoPublica || 0)}</td>
       <td class="row-edit"><input type="number" step="0.01" min="0" data-field="bandeira" value="${f.bandeira || 0}"></td>
       <td class="${cobrado >= 0 ? 'pos' : 'neg'}" data-cobrado>${BRL.format(cobrado)}</td>
       <td class="row-edit"><input type="number" step="0.01" min="0" data-field="valorConcessionaria" value="${f.valorConcessionaria}"></td>
@@ -641,8 +706,6 @@ function renderFaturamento(){
     tbody.appendChild(tr);
   }
 }
-
-document.getElementById('fat-mes').addEventListener('change', () => { renderFaturamento(); renderFaturamentoHistorico(); });
 
 document.getElementById('btn-gerar-mes').addEventListener('click', () => {
   const mes = document.getElementById('fat-mes').value;
@@ -830,6 +893,8 @@ document.querySelectorAll('nav button').forEach(btn => {
 function setDefaultMonths(){
   const atual = currentMonthStr();
   document.getElementById('fat-mes').value = atual;
+  renderYearSelect();
+  renderMonthTabs();
 
   const rows = state.financeiro.slice().sort((a,b) => a.mes.localeCompare(b.mes));
   let proximo = atual;
