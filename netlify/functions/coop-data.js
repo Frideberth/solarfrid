@@ -1,4 +1,8 @@
-const { getStore } = require('@netlify/blobs');
+const store = getStore({
+  name: 'coop-solar',
+  siteID: process.env.BLOBS_SITE_ID || process.env.SITE_ID,
+  token: process.env.BLOBS_TOKEN,
+});
 
 // Dados iniciais extraídos da planilha PAINEL RETORNO USINA SOLAR:
 // - clientes e faturamento de set/2026 (aba "PAINEL SETEMBRO 2026")
