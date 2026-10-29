@@ -97,11 +97,7 @@ exports.handler = async (event) => {
       return { statusCode: 401, headers: HEADERS, body: JSON.stringify({ error: 'Senha de acesso inválida ou não informada.' }) };
     }
 
-    const store = getStore({
-      name: 'coop-solar',
-      siteID: process.env.BLOBS_SITE_ID || process.env.SITE_ID,
-      token: process.env.BLOBS_TOKEN,
-    });
+    const store = getStore('coop-solar');
 
     if (event.httpMethod === 'GET') {
       let data = await store.get('data', { type: 'json' });

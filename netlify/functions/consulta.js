@@ -20,11 +20,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Link inválido.' }) };
     }
 
-    const store = getStore({
-      name: 'coop-solar',
-      siteID: process.env.BLOBS_SITE_ID || process.env.SITE_ID,
-      token: process.env.BLOBS_TOKEN,
-    });
+    const store = getStore('coop-solar');
 
     const data = await store.get('data', { type: 'json' });
     if (!data) {
