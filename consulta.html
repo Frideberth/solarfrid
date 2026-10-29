@@ -100,7 +100,7 @@
       <h2>Histórico de consumo e pagamentos</h2>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Mês</th><th>Consumo (kWh)</th><th>Saldo (kWh)</th><th>Valor</th><th>Situação</th></tr></thead>
+          <thead><tr><th>Mês</th><th>Consumo (kWh)</th><th>Valor</th><th>Situação</th></tr></thead>
           <tbody id="tbody-historico"></tbody>
         </table>
       </div>
@@ -182,7 +182,6 @@ function render(dados){
     tr.innerHTML = `
       <td>${mesLabel(f.mes)}</td>
       <td>${typeof f.consumoKwh === 'number' ? NUM.format(f.consumoKwh) : '—'}</td>
-      <td>${typeof f.saldoScee === 'number' ? NUM.format(f.saldoScee) : '—'}</td>
       <td>${typeof f.valorCobrado === 'number' ? BRL.format(f.valorCobrado) : '—'}</td>
       <td>${situacao}</td>`;
     tbody.appendChild(tr);
