@@ -1,4 +1,5 @@
 const { getStore } = require('@netlify/blobs');
+// build: usa BLOBS_TOKEN + BLOBS_SITE_ID (config manual) — 2026-10-29
 
 const HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -43,7 +44,6 @@ exports.handler = async (event) => {
         mesReferencia: f.mesReferencia || null,
         vencimento: f.vencimento || null,
         consumoKwh: typeof f.consumoKwh === 'number' ? f.consumoKwh : null,
-        saldoScee: typeof f.saldoScee === 'number' ? f.saldoScee : null,
         valorCobrado: f.valorCobrado,
         pago: !!f.pago,
       }))
