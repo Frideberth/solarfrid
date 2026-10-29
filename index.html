@@ -414,7 +414,13 @@ let mesFaturamentoAtual = null;
 let apiKey = (localStorage.getItem('coopApiKey') || '').trim();
 
 function pedirChaveAcesso(mensagem){
-  const v = prompt(mensagem || 'Senha de acesso ao painel:');
+  let v;
+  try{
+    v = prompt(mensagem || 'Senha de acesso ao painel:');
+  }catch(e){
+    console.error('prompt() indisponível neste navegador:', e);
+    return false;
+  }
   if(v && v.trim()){ apiKey = v.trim(); localStorage.setItem('coopApiKey', apiKey); return true; }
   return false;
 }
@@ -1581,6 +1587,11 @@ document.getElementById('btn-restaurar-backup').addEventListener('click', () => 
 document.getElementById('input-restaurar-backup').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if(!file) return;
+  if(!loaded || !state){
+    alert('Os dados ainda não foram carregados com sucesso (veja o aviso no topo da página). Recarregue a página (F5), informe a senha de acesso corretamente, e só então tente restaurar o backup de novo.');
+    e.target.value = '';
+    return;
+  }
   try{
     const texto = await file.text();
     const novo = JSON.parse(texto);
