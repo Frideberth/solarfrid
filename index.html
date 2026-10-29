@@ -7,28 +7,39 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#f4f6f5; --card:#ffffff; --ink:#16241f; --muted:#5b6b64;
-    --border:#e1e8e4; --accent:#1f8a5f; --accent-dark:#136b47;
+    --bg:#f4f6f8; --card:#ffffff; --surface-2:#eef2f7; --field-bg:#ffffff;
+    --ink:#16202e; --muted:#5b6b7d;
+    --border:#e1e6ee; --accent:#2563eb; --accent-dark:#1d4ed8;
     --green:#1f8a5f; --green-bg:#e8f6ef; --red:#c1432f; --red-bg:#fbeae7;
     --amber:#b8860b; --amber-bg:#fbf3de;
     --radius:14px;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
+  :root[data-theme="dark"]{
+    --bg:#0d1524; --card:#141d30; --surface-2:#1b2740; --field-bg:#101a2c;
+    --ink:#e7edf7; --muted:#8b9ab0;
+    --border:#25324a; --accent:#3b82f6; --accent-dark:#2563eb;
+    --green:#34d399; --green-bg:#123227; --red:#f87171; --red-bg:#3a1620;
+    --amber:#fbbf24; --amber-bg:#3a2e10;
+  }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);padding-bottom:60px;}
-  header{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;padding:24px 20px 20px;}
+  body{margin:0;background:var(--bg);color:var(--ink);padding-bottom:60px;transition:background .15s,color .15s;}
+  header{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;padding:24px 20px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
   header h1{margin:0 0 4px;font-size:1.5rem;}
   header p{margin:0;opacity:.9;font-size:.9rem;}
   .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;background:rgba(255,255,255,.18);padding:4px 10px;border-radius:999px;margin-top:10px;}
   .dot{width:7px;height:7px;border-radius:50%;background:#9be7c4;}
   .dot.err{background:#f3a8a8;}
   .dot.saving{background:#ffe08a;}
+  #theme-toggle{flex:0 0 auto;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;padding:8px 12px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+  #theme-toggle:hover{background:rgba(255,255,255,.22);}
 
   nav{display:flex;gap:4px;padding:10px 16px 0;background:var(--bg);position:sticky;top:0;z-index:5;border-bottom:1px solid var(--border);overflow-x:auto;}
   nav button{border:none;background:none;padding:10px 14px;font-size:.9rem;color:var(--muted);cursor:pointer;border-radius:10px 10px 0 0;font-weight:600;white-space:nowrap;}
   nav button.active{color:var(--accent-dark);background:var(--card);border:1px solid var(--border);border-bottom:1px solid var(--card);margin-bottom:-1px;}
 
   main{max-width:1080px;margin:0 auto;padding:20px 16px;}
+  main.wide{max-width:1800px;}
   .view{display:none;}
   .view.active{display:block;}
 
@@ -49,12 +60,12 @@
   .badge.lucro{background:var(--green-bg);color:var(--green);}
   .badge.prejuizo{background:var(--red-bg);color:var(--red);}
   .badge.ativo{background:var(--green-bg);color:var(--green);}
-  .badge.inativo{background:#eef2f0;color:var(--muted);}
+  .badge.inativo{background:var(--surface-2);color:var(--muted);}
   .badge.pago{background:var(--green-bg);color:var(--green);}
   .badge.pendente{background:var(--amber-bg);color:var(--amber);}
 
   .progress-wrap{margin:10px 0 4px;}
-  .progress-bar{height:14px;background:#eef2f0;border-radius:999px;overflow:hidden;position:relative;}
+  .progress-bar{height:14px;background:var(--surface-2);border-radius:999px;overflow:hidden;position:relative;}
   .progress-bar > div{height:100%;border-radius:999px;background:linear-gradient(90deg,#28a06a,#1f8a5f);transition:width .4s;}
   .progress-bar.neg > div{background:linear-gradient(90deg,#d9584a,#c1432f);}
   .progress-label{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:6px;}
@@ -65,24 +76,24 @@
   th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
   th:first-child,td:first-child{text-align:left;}
   th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;}
-  tbody tr:hover{background:#fafcfb;}
+  tbody tr:hover{background:var(--surface-2);}
   .table-scroll{overflow-x:auto;}
   td.neg{color:var(--red);} td.pos{color:var(--green);}
 
   form.inline{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end;margin-bottom:8px;}
   label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px;}
-  input,select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:.92rem;background:#fff;color:var(--ink);}
+  input,select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:.92rem;background:var(--field-bg);color:var(--ink);}
   input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;}
   input[type="checkbox"]{width:auto;}
 
   button.btn{background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;}
   button.btn:hover{background:var(--accent-dark);}
-  button.btn.secondary{background:#eef2f0;color:var(--ink);}
+  button.btn.secondary{background:var(--surface-2);color:var(--ink);}
   button.btn.secondary:hover{background:#e2e8e5;}
   button.btn.danger{background:var(--red-bg);color:var(--red);}
   button.btn.danger:hover{background:#f5d3cc;}
   button.icon-btn{background:none;border:none;cursor:pointer;font-size:.95rem;padding:4px 6px;border-radius:6px;color:var(--muted);}
-  button.icon-btn:hover{background:#eef2f0;}
+  button.icon-btn:hover{background:var(--surface-2);}
 
   .actions-row{display:flex;gap:8px;justify-content:flex-end;}
   .empty{color:var(--muted);font-size:.88rem;padding:20px 0;text-align:center;}
@@ -90,21 +101,67 @@
   .banner{background:var(--red-bg);color:var(--red);border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:16px;}
   .row-edit input{width:100px;}
   .month-tabs{display:flex;gap:6px;overflow-x:auto;margin:2px 0 16px;padding-bottom:2px;}
-  .month-tabs button{flex:0 0 auto;border:1px solid var(--border);background:#fff;color:var(--muted);padding:7px 12px;border-radius:999px;font-size:.82rem;font-weight:600;cursor:pointer;}
+  .month-tabs button{flex:0 0 auto;border:1px solid var(--border);background:var(--field-bg);color:var(--muted);padding:7px 12px;border-radius:999px;font-size:.82rem;font-weight:600;cursor:pointer;}
   .month-tabs button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
   .month-tabs button.has-data:not(.active){border-color:var(--accent);color:var(--accent-dark);}
   @media (max-width:560px){
     .row-edit input{width:80px;}
     th,td{font-size:.76rem;padding:7px 5px;}
+    header{flex-wrap:wrap;}
+    #theme-toggle{font-size:.78rem;padding:6px 10px;}
   }
+
+  .tbl-contas{table-layout:fixed;font-size:.8rem;}
+  .tbl-contas th,.tbl-contas td{padding:8px 5px;white-space:normal;word-break:break-word;}
+  .tbl-contas th{line-height:1.2;}
+  .tbl-contas .row-edit input{width:100%;min-width:0;padding:7px 6px;font-size:.82rem;}
+  .tbl-contas input[type="month"],.tbl-contas input[type="date"]{padding:6px 4px;font-size:.78rem;}
+  .tbl-contas th:nth-child(1),.tbl-contas td:nth-child(1){width:9%;}
+  .tbl-contas th:nth-child(2),.tbl-contas td:nth-child(2){width:7%;}
+  .tbl-contas th:nth-child(3),.tbl-contas td:nth-child(3){width:7%;}
+  .tbl-contas th:nth-child(4),.tbl-contas td:nth-child(4){width:6.5%;}
+  .tbl-contas th:nth-child(5),.tbl-contas td:nth-child(5){width:6.5%;}
+  .tbl-contas th:nth-child(6),.tbl-contas td:nth-child(6){width:4%;}
+  .tbl-contas th:nth-child(7),.tbl-contas td:nth-child(7){width:6%;}
+  .tbl-contas th:nth-child(8),.tbl-contas td:nth-child(8){width:6%;}
+  .tbl-contas th:nth-child(9),.tbl-contas td:nth-child(9){width:6%;}
+  .tbl-contas th:nth-child(10),.tbl-contas td:nth-child(10){width:6%;}
+  .tbl-contas th:nth-child(11),.tbl-contas td:nth-child(11){width:7%;}
+  .tbl-contas th:nth-child(12),.tbl-contas td:nth-child(12){width:7%;}
+  .tbl-contas th:nth-child(13),.tbl-contas td:nth-child(13){width:6%;}
+  .tbl-contas th:nth-child(14),.tbl-contas td:nth-child(14){width:6%;}
+  .tbl-contas th:nth-child(15),.tbl-contas td:nth-child(15){width:3.5%;}
+  .tbl-contas th:nth-child(16),.tbl-contas td:nth-child(16){width:6.5%;}
+
+  .tbl-clientes{table-layout:fixed;}
+  .tbl-clientes th,.tbl-clientes td{white-space:normal;word-break:break-word;}
+  .tbl-clientes .row-edit input{width:100%;min-width:0;}
+  .tbl-clientes th:nth-child(1),.tbl-clientes td:nth-child(1){width:15%;}
+  .tbl-clientes th:nth-child(2),.tbl-clientes td:nth-child(2){width:28%;}
+  .tbl-clientes th:nth-child(3),.tbl-clientes td:nth-child(3){width:12%;}
+  .tbl-clientes th:nth-child(4),.tbl-clientes td:nth-child(4){width:9%;}
+  .tbl-clientes th:nth-child(5),.tbl-clientes td:nth-child(5){width:8%;}
+  .tbl-clientes th:nth-child(6),.tbl-clientes td:nth-child(6){width:10%;}
+  .tbl-clientes th:nth-child(7),.tbl-clientes td:nth-child(7){width:9%;}
+  .tbl-clientes th:nth-child(8),.tbl-clientes td:nth-child(8){width:9%;}
+
+  .demo-overlay{position:fixed;inset:0;background:#2b332f;z-index:50;display:flex;flex-direction:column;}
+  .demo-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;background:#1c2420;color:#fff;flex-wrap:wrap;}
+  .demo-toolbar span{font-size:.88rem;font-weight:600;}
+  .demo-toolbar .btn.secondary{background:#3a453f;color:#fff;}
+  .demo-toolbar .btn.secondary:hover{background:#4a564f;}
+  #demo-frame{flex:1;width:100%;border:none;background:#fff;}
 </style>
 </head>
 <body>
 
 <header>
-  <h1 id="coop-title">Cooperativa Solar</h1>
-  <p id="coop-subtitle">Gestão de clientes, faturamento e retorno do investimento</p>
-  <span class="status-pill"><span class="dot" id="status-dot"></span><span id="status-text">Carregando…</span></span>
+  <div>
+    <h1 id="coop-title">Cooperativa Solar</h1>
+    <p id="coop-subtitle">Gestão de clientes, faturamento e retorno do investimento</p>
+    <span class="status-pill"><span class="dot" id="status-dot"></span><span id="status-text">Carregando…</span></span>
+  </div>
+  <button id="theme-toggle" type="button" title="Alternar modo claro/escuro"></button>
 </header>
 
 <nav>
@@ -115,7 +172,7 @@
   <button data-view="config">Configurações</button>
 </nav>
 
-<main>
+<main id="main-content">
   <div id="load-error" class="banner" style="display:none;"></div>
 
   <!-- DASHBOARD -->
@@ -162,7 +219,7 @@
     <div class="panel">
       <h2>Clientes cadastrados</h2>
       <div class="table-scroll">
-        <table>
+        <table class="tbl-clientes">
           <thead><tr><th>Nome</th><th>Endereço</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Ilum. pública</th><th>Status</th><th></th></tr></thead>
           <tbody id="tbody-clientes"></tbody>
         </table>
@@ -189,24 +246,68 @@
     <div class="panel" id="painel-faturamento-mes">
       <div class="panel-head">
         <h2>Demonstrativo do mês</h2>
-        <div style="display:flex;gap:8px;align-items:end;">
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
           <input type="hidden" id="fat-mes">
           <div><label for="fat-ano">Ano</label><select id="fat-ano"></select></div>
           <button class="btn secondary" id="btn-gerar-mes">Carregar / gerar mês</button>
+          <button class="btn" id="btn-importar-copel">📎 Importar conta Copel (PDF)</button>
+          <input type="file" id="input-copel-pdf" accept="application/pdf" style="display:none;">
         </div>
       </div>
       <div class="month-tabs" id="month-tabs"></div>
       <div class="table-scroll">
-        <table>
-          <thead><tr><th>Cliente</th><th>Tarifa (R$/kWh)</th><th>Desconto</th><th>Consumo (kWh)</th><th>Ilum. pública</th><th>Bandeira (R$)</th><th>Cobrado (calculado)</th><th>Concessionária (R$)</th><th>Lucro</th><th>Pago</th><th></th></tr></thead>
+        <table class="tbl-contas">
+          <thead><tr>
+            <th>Cliente</th><th>Mês referência</th><th>Vencimento</th>
+            <th>Tarifa consumo</th><th>Tarifa sistema</th><th>Desconto</th><th>Consumo (kWh)</th>
+            <th>Ilum. pública</th><th>Bandeira</th><th>Valor bandeira</th>
+            <th>Cobrado (calculado)</th><th>Concessionária (R$)</th><th>Lucro</th><th>Saldo SCEE (kWh)</th><th>Pago</th><th></th>
+          </tr></thead>
           <tbody id="tbody-faturamento"></tbody>
         </table>
       </div>
       <div class="empty" id="faturamento-empty" style="display:none;">Escolha um mês e clique em "Carregar / gerar mês".</div>
-      <p class="hint">Demonstrativo completo por cliente, igual à conta de luz: tarifa e desconto vêm da configuração/cadastro, consumo e bandeira são lançados aqui. "Lucro" é calculado automaticamente (cobrado − concessionária) e alimenta o Financeiro/ROI do mês.</p>
+      <p class="hint">Lance aqui a tarifa, o consumo e a bandeira exatos da conta Copel de cada cliente naquele mês — é isso que o cálculo usa (não uma tarifa fixa). "Mês referência" é o mês da conta (ex: julho); "Mês" no topo/histórico é o mês em que ela é cobrada (ex: vence em setembro). "Saldo SCEE" é o saldo de energia acumulado que aparece na própria conta da Copel ("Saldo Acumulado em cada Posto Horário"), pra acompanhar quanto de crédito solar cada conta ainda tem disponível. Clique em 📄 pra ver/imprimir o Demonstrativo pronto pra enviar ao cliente.</p>
       <div style="margin-top:12px;"><button class="btn" id="btn-salvar-fat">Salvar contas do mês</button></div>
     </div>
   </section>
+
+  <div id="demo-overlay" class="demo-overlay" style="display:none;">
+    <div class="demo-toolbar">
+      <span id="demo-titulo"></span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn secondary" id="demo-imprimir">🖨️ Imprimir / Salvar PDF</button>
+        <button class="btn secondary" id="demo-fechar">✖️ Fechar</button>
+      </div>
+    </div>
+    <iframe id="demo-frame" title="Demonstrativo de Energia"></iframe>
+  </div>
+
+  <div id="import-overlay" class="demo-overlay" style="display:none;align-items:center;justify-content:center;">
+    <div class="panel" style="max-width:640px;width:calc(100% - 32px);max-height:calc(100vh - 32px);overflow:auto;">
+      <h2>Conferir dados importados da conta Copel</h2>
+      <div id="import-warnings" class="hint" style="color:var(--amber);"></div>
+      <form class="inline" id="form-import" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+        <div style="grid-column:1/-1;"><label for="imp-cliente">Cliente (por UC — confira se bateu certo)</label><select id="imp-cliente"></select></div>
+        <div><label for="imp-mes-ref">Mês referência</label><input type="month" id="imp-mes-ref"></div>
+        <div><label for="imp-vencimento">Vencimento</label><input type="date" id="imp-vencimento"></div>
+        <div><label for="imp-consumo">Consumo (kWh)</label><input type="number" id="imp-consumo"></div>
+        <div><label for="imp-tarifa-consumo">Tarifa consumo</label><input type="number" step="0.000001" id="imp-tarifa-consumo"></div>
+        <div><label for="imp-tarifa-sistema">Tarifa uso sistema</label><input type="number" step="0.000001" id="imp-tarifa-sistema"></div>
+        <div><label for="imp-bandeira-nome">Bandeira</label><input type="text" id="imp-bandeira-nome"></div>
+        <div><label for="imp-bandeira-valor">Valor da bandeira (R$)</label><input type="number" step="0.01" id="imp-bandeira-valor"></div>
+        <div><label for="imp-iluminacao">Iluminação pública (R$)</label><input type="number" step="0.01" id="imp-iluminacao"></div>
+        <div><label for="imp-concessionaria">Pago à concessionária (R$)</label><input type="number" step="0.01" id="imp-concessionaria"></div>
+        <div><label for="imp-saldo-scee">Saldo SCEE (kWh)</label><input type="number" step="1" id="imp-saldo-scee"></div>
+        <div style="grid-column:1/-1;"><label><input type="checkbox" id="imp-atualizar-cadastro" style="width:auto;"> Atualizar UC/endereço do cadastro do cliente com os dados desta conta</label></div>
+      </form>
+      <p class="hint" id="import-historico-info"></p>
+      <div class="actions-row">
+        <button class="btn secondary" id="btn-import-cancelar">Cancelar</button>
+        <button class="btn" id="btn-import-aplicar">Aplicar em Contas</button>
+      </div>
+    </div>
+  </div>
 
   <!-- FINANCEIRO / ROI -->
   <section class="view" id="view-financeiro">
@@ -249,13 +350,24 @@
     </div>
 
     <div class="panel">
-      <h2>Tarifas da concessionária</h2>
+      <h2>Tarifa padrão (valor inicial de cada novo mês)</h2>
       <form class="inline" id="form-tarifas" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
         <div><label for="cfg-tarifa-consumo">Energia elét. consumo (R$/kWh)</label><input type="number" step="0.000001" min="0" id="cfg-tarifa-consumo"></div>
         <div><label for="cfg-tarifa-sistema">Energia elét. uso do sistema (R$/kWh)</label><input type="number" step="0.000001" min="0" id="cfg-tarifa-sistema"></div>
-        <div><button type="submit" class="btn">Salvar tarifas</button></div>
+        <div><button type="submit" class="btn">Salvar tarifa padrão</button></div>
       </form>
-      <p class="hint">Tiradas da conta de luz — mudam raramente (reajuste da COPEL). Usadas para calcular o valor cobrado no Faturamento junto com o % de desconto e a iluminação pública de cada cliente.</p>
+      <p class="hint">Isto NÃO é mais a tarifa usada em todo cliente/mês — é só o valor que já vem preenchido quando você abre um mês novo em Contas. O que realmente entra no cálculo de cada cliente é a tarifa daquela linha específica, lançada em Contas a partir da conta Copel real do mês dele — porque a tarifa muda ao longo do ano e cada bandeira/reajuste afeta o valor.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Pagamento e emissões</h2>
+      <form class="inline" id="form-pagamento" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <div><label for="cfg-pix-chave">Chave Pix (exibida no Demonstrativo)</label><input type="text" id="cfg-pix-chave"></div>
+        <div><label for="cfg-pix-contato">Contato (e-mail/telefone)</label><input type="text" id="cfg-pix-contato"></div>
+        <div><label for="cfg-fator-co2">Fator de emissão evitada (kg CO₂/kWh)</label><input type="number" step="0.0001" min="0" id="cfg-fator-co2"></div>
+        <div><button type="submit" class="btn">Salvar</button></div>
+      </form>
+      <p class="hint">O fator de CO₂ é uma estimativa do fator médio do grid brasileiro (SIN) — ajuste se você tiver uma fonte oficial (ex: MCTI) mais atual. Usados no "Demonstrativo de Energia" de cada cliente.</p>
     </div>
 
     <div class="panel">
@@ -269,18 +381,66 @@
       </select>
       <p class="hint">Usada só para estimar o prazo restante no Dashboard — não altera os dados salvos.</p>
     </div>
+
+    <div class="panel">
+      <h2>Backup e restauração</h2>
+      <p class="hint">Baixe um backup regularmente para guardar uma cópia de segurança de todos os dados (clientes, contas, financeiro). "Restaurar backup" SUBSTITUI todos os dados atuais pelo conteúdo do arquivo escolhido — use com cuidado.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button type="button" class="btn secondary" id="btn-baixar-backup">⬇️ Baixar backup (.json)</button>
+        <button type="button" class="btn secondary" id="btn-restaurar-backup">⬆️ Restaurar backup</button>
+        <input type="file" id="input-restaurar-backup" accept="application/json" style="display:none;">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Senha de acesso</h2>
+      <p class="hint">Senha usada por este navegador para ler e salvar os dados no servidor. Se você limpar os dados do navegador ou abrir em outro dispositivo, ela será pedida novamente.</p>
+      <button type="button" class="btn secondary" id="btn-alterar-senha">🔑 Informar/alterar a senha salva neste navegador</button>
+    </div>
   </section>
 </main>
 
 <script>
 const API = '/api/coop-data';
 const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const NUM = new Intl.NumberFormat('pt-BR');
 const MES_FMT = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
+const MES_FMT_LONGO = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
 
 let state = null;
 let loaded = false;
 let chart = null;
 let mesFaturamentoAtual = null;
+let apiKey = (localStorage.getItem('coopApiKey') || '').trim();
+
+function pedirChaveAcesso(mensagem){
+  const v = prompt(mensagem || 'Senha de acesso ao painel:');
+  if(v && v.trim()){ apiKey = v.trim(); localStorage.setItem('coopApiKey', apiKey); return true; }
+  return false;
+}
+
+function gerarTokenConsulta(){
+  const bytes = new Uint8Array(16);
+  if(window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+  else for(let i=0;i<bytes.length;i++) bytes[i] = Math.floor(Math.random()*256);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function apiFetch(opts, permitirReprompt){
+  if(permitirReprompt === undefined) permitirReprompt = true;
+  opts = opts || {};
+  if(!apiKey) pedirChaveAcesso();
+  const headers = Object.assign({}, opts.headers || {}, apiKey ? { 'x-api-key': apiKey } : {});
+  const res = await fetch(API, Object.assign({}, opts, { headers }));
+  if(res.status === 401 && permitirReprompt){
+    localStorage.removeItem('coopApiKey');
+    apiKey = '';
+    if(pedirChaveAcesso('Senha incorreta ou não informada. Digite a senha de acesso ao painel:')){
+      return apiFetch(opts, false);
+    }
+  }
+  return res;
+}
 
 function mesLabel(mes){
   const [y,m] = mes.split('-').map(Number);
@@ -300,7 +460,8 @@ function setStatus(kind, text){
 async function loadData(){
   setStatus('saving', 'Carregando…');
   try{
-    const res = await fetch(API);
+    const res = await apiFetch({ method: 'GET' });
+    if(res.status === 401) throw new Error('Senha de acesso inválida.');
     if(!res.ok) throw new Error('HTTP ' + res.status);
     state = await res.json();
     loaded = true;
@@ -323,12 +484,25 @@ async function saveData(){
   }
   setStatus('saving', 'Salvando…');
   try{
-    const res = await fetch(API, {
+    const res = await apiFetch({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(state)
     });
+    if(res.status === 401){
+      setStatus('err', 'Senha inválida');
+      alert('Senha de acesso inválida — esta alteração NÃO foi salva. Recarregue a página e informe a senha correta.');
+      return false;
+    }
+    if(res.status === 409){
+      const info = await res.json().catch(() => ({}));
+      setStatus('err', 'Dados desatualizados');
+      alert((info.error || 'Os dados no arquivo mudaram desde que esta página carregou.') + '\n\nEsta alteração NÃO foi salva — para não apagar o que já está no arquivo. Recarregue a página (F5) e refaça a alteração.');
+      return false;
+    }
     if(!res.ok) throw new Error('HTTP ' + res.status);
+    const salvo = await res.json();
+    if(salvo && typeof salvo._rev === 'number') state._rev = salvo._rev;
     setStatus('ok', 'Sincronizado');
     return true;
   }catch(err){
@@ -463,21 +637,29 @@ function renderChart(rows){
   const diffs = rows.map(r => r.diferenca);
 
   if(chart) chart.destroy();
+  const escuro = document.documentElement.dataset.theme === 'dark';
+  const corTexto = escuro ? '#b7c2d6' : '#5b6b7d';
+  const corGrade = escuro ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+  const corLinha = escuro ? '#34d399' : '#16a34a';
   chart = new Chart(ctx, {
     data: {
       labels,
       datasets: [
         { type: 'bar', label: 'Diferença mensal', data: diffs,
-          backgroundColor: diffs.map(d => d >= 0 ? 'rgba(31,138,95,0.55)' : 'rgba(193,67,47,0.55)'), yAxisID: 'y' },
+          backgroundColor: diffs.map(d => d >= 0 ? 'rgba(52,211,153,0.55)' : 'rgba(248,113,113,0.55)'), yAxisID: 'y' },
         { type: 'line', label: 'Saldo acumulado', data: saldos,
-          borderColor: '#136b47', backgroundColor: 'rgba(19,107,71,0.12)', borderWidth: 2, tension: 0.25, fill: true, pointRadius: 3, yAxisID: 'y' }
+          borderColor: corLinha, backgroundColor: escuro ? 'rgba(52,211,153,0.15)' : 'rgba(22,163,74,0.12)', borderWidth: 2, tension: 0.25, fill: true, pointRadius: 3, yAxisID: 'y' }
       ]
     },
     options: {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${BRL.format(ctx.parsed.y)}` } } },
-      scales: { y: { ticks: { callback: (v) => BRL.format(v) } } }
+      color: corTexto,
+      plugins: { legend: { position: 'bottom', labels: { color: corTexto } }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${BRL.format(ctx.parsed.y)}` } } },
+      scales: {
+        x: { ticks: { color: corTexto }, grid: { color: corGrade } },
+        y: { ticks: { color: corTexto, callback: (v) => BRL.format(v) }, grid: { color: corGrade } }
+      }
     }
   });
 }
@@ -501,6 +683,7 @@ function renderClientes(){
       <td><div class="actions-row">
         <button class="icon-btn" data-action="edit" title="Editar">✏️</button>
         <button class="icon-btn" data-action="toggle" title="Ativar/Inativar">🔁</button>
+        <button class="icon-btn" data-action="link" title="Copiar link de consulta do cliente">🔗</button>
         <button class="icon-btn" data-action="delete" title="Excluir">🗑️</button>
       </div></td>`;
     tbody.appendChild(tr);
@@ -547,6 +730,19 @@ document.getElementById('tbody-clientes').addEventListener('click', async (e) =>
     c.status = c.status === 'inativo' ? 'ativo' : 'inativo';
     if(await saveData()) render();
   }
+  if(btn.dataset.action === 'link'){
+    if(!c.tokenConsulta){
+      c.tokenConsulta = gerarTokenConsulta();
+      if(!(await saveData())) return;
+    }
+    const link = location.origin + '/consulta.html?t=' + c.tokenConsulta;
+    try{
+      await navigator.clipboard.writeText(link);
+      alert('Link de consulta copiado para a área de transferência:\n\n' + link);
+    }catch(e){
+      prompt('Copie o link de consulta deste cliente:', link);
+    }
+  }
   if(btn.dataset.action === 'delete'){
     if(confirm(`Excluir o cliente ${c.nome}? Isso não remove faturamentos já lançados.`)){
       state.clientes = state.clientes.filter(x => x.id !== id);
@@ -564,7 +760,7 @@ document.getElementById('form-cliente').addEventListener('submit', async (e) => 
   const desc = parseFloat(document.getElementById('cl-desc').value) / 100;
   const ilum = parseFloat(document.getElementById('cl-ilum').value) || 0;
   if(!nome || isNaN(dia) || isNaN(desc)){ alert('Preencha os campos obrigatórios.'); return; }
-  state.clientes.push({ id: 'cl-' + Date.now(), nome, endereco, uc, diaVencimento: dia, percentualDesconto: desc, iluminacaoPublica: ilum, status: 'ativo' });
+  state.clientes.push({ id: 'cl-' + Date.now(), nome, endereco, uc, diaVencimento: dia, percentualDesconto: desc, iluminacaoPublica: ilum, status: 'ativo', tokenConsulta: gerarTokenConsulta() });
   if(await saveData()){ e.target.reset(); render(); }
 });
 
@@ -590,7 +786,7 @@ function renderFaturamentoHistorico(){
   const mesSelecionado = document.getElementById('fat-mes').value;
   for(const r of rows){
     const tr = document.createElement('tr');
-    if(r.mes === mesSelecionado) tr.style.background = '#f0f7f3';
+    if(r.mes === mesSelecionado) tr.style.background = 'var(--green-bg)';
     tr.innerHTML = `
       <td>${mesLabel(r.mes)}</td>
       <td>${r.total}</td>
@@ -613,12 +809,452 @@ document.getElementById('tbody-fat-historico').addEventListener('click', (e) => 
   document.getElementById('painel-faturamento-mes').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-function calcularValorCobrado(cliente, consumoKwh, bandeira){
-  const tarifa = (state.config.tarifaConsumo || 0) + (state.config.tarifaUsoSistema || 0);
-  const desconto = cliente.percentualDesconto || 0;
-  const base = tarifa * (1 - desconto) * (consumoKwh || 0);
-  return base + (cliente.iluminacaoPublica || 0) + (bandeira || 0);
+// Calcula a fatura de um lançamento (linha de Contas), sempre com a tarifa daquela
+// linha (a da conta Copel real do mês/cliente); se a linha ainda não tem tarifa própria
+// lançada, cai de volta na tarifa padrão só pra não mostrar zero.
+function calcularFatura(f, cliente){
+  const tarifaConsumo = f.tarifaConsumo || state.config.tarifaConsumo || 0;
+  const tarifaSistema = f.tarifaUsoSistema || state.config.tarifaUsoSistema || 0;
+  const tarifaCombinada = tarifaConsumo + tarifaSistema;
+  const desconto = cliente ? (cliente.percentualDesconto || 0) : 0;
+  const iluminacao = cliente ? (cliente.iluminacaoPublica || 0) : 0;
+  const bandeira = f.bandeira || 0;
+  const consumo = f.consumoKwh || 0;
+  const semDesconto = tarifaCombinada * consumo + iluminacao + bandeira;
+  const comDesconto = tarifaCombinada * (1 - desconto) * consumo + iluminacao + bandeira;
+  return { tarifaConsumo, tarifaSistema, tarifaCombinada, semDesconto, comDesconto, economia: semDesconto - comDesconto };
 }
+
+// mantido por compatibilidade com o Dashboard (só precisa do valor com desconto)
+function calcularValorCobrado(cliente, f){
+  return calcularFatura(f, cliente).comDesconto;
+}
+
+// ---------- Demonstrativo de Energia (documento por cliente/mês) ----------
+
+function fatorEmissao(){ return state.config.fatorEmissaoCO2 || 0.1134; }
+
+function mesRefDe(f){ return f.mesReferencia || f.mes; }
+
+function mesReferenciaLabelLongo(mesRef){
+  const [y,m] = mesRef.split('-').map(Number);
+  const s = MES_FMT_LONGO.format(new Date(y, m-1, 1));
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function formatDataBR(dataISO){
+  if(!dataISO) return '—';
+  const [y,m,d] = dataISO.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// Últimos 12 meses de consumo do cliente, até e incluindo o mês de referência atual, em ordem
+// cronológica. Combina os lançamentos completos de Contas (mais confiáveis) com o histórico
+// só-de-consumo importado das contas Copel (state.historicoConsumo), que preenche meses antigos
+// que ainda não têm um lançamento de cobrança completo.
+function historicoCliente(clienteId, mesRefAtual){
+  const porMes = {};
+  for(const h of (state.historicoConsumo || [])){
+    if(h.clienteId === clienteId && h.mesReferencia <= mesRefAtual) porMes[h.mesReferencia] = h.consumoKwh;
+  }
+  for(const f of state.faturamento){
+    if(f.clienteId === clienteId && mesRefDe(f) <= mesRefAtual && (f.consumoKwh || 0) > 0){
+      porMes[mesRefDe(f)] = f.consumoKwh; // lançamento de Contas tem prioridade
+    }
+  }
+  return Object.keys(porMes).sort().slice(-12).map(mesRef => ({ mesRef, consumoKwh: porMes[mesRef] }));
+}
+
+// Soma economia (R$) e CO2 evitado (kg) do cliente desde janeiro até o mês de referência atual, no mesmo ano.
+// Clientes com "economiaBaseAno" (valor acumulado até um mês de referência anterior ao início dos
+// lançamentos completos no app) começam a partir dessa base, somando só os lançamentos posteriores
+// a ela — evita contar duas vezes o período que a base já cobre.
+function acumuladoAno(clienteId, mesRefAtual, cliente){
+  const ano = mesRefAtual.split('-')[0];
+  const base = cliente && cliente.economiaBaseAno;
+  const desde = (base && base.mesReferencia && base.mesReferencia.startsWith(ano + '-')) ? base.mesReferencia : null;
+  const rows = state.faturamento.filter(f => f.clienteId === clienteId && mesRefDe(f).startsWith(ano + '-') && mesRefDe(f) <= mesRefAtual && (!desde || mesRefDe(f) > desde));
+  let economia = desde ? (base.economia || 0) : 0;
+  let co2 = desde ? (base.co2 || 0) : 0;
+  for(const f of rows){
+    economia += calcularFatura(f, cliente).economia;
+    co2 += (f.consumoKwh || 0) * fatorEmissao();
+  }
+  return { economia, co2 };
+}
+
+function roundGrid(v){
+  if(v <= 0) return 100;
+  const passos = [100, 200, 500, 1000, 1500, 2000, 3000, 5000];
+  for(const p of passos) if(v <= p) return p;
+  return Math.ceil(v / 1000) * 1000;
+}
+
+function buildHistoricoSVG(historico){
+  const max = Math.max(...historico.map(h => h.consumoKwh), 1);
+  const gridVal = roundGrid(max);
+  const baseY = 130, chartH = 90, startX = 20, barW = 40, gap = 14, step = barW + gap;
+  const scale = chartH / gridVal;
+  let bars = '';
+  historico.forEach((h, i) => {
+    const x = startX + i * step;
+    const hpx = h.consumoKwh * scale;
+    const y = baseY - hpx;
+    const atual = i === historico.length - 1;
+    const [yy, mm] = h.mesRef.split('-').map(Number);
+    const label = `${MESES_ABREV[mm-1]}/${String(yy).slice(2)}`;
+    if(atual){
+      bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${hpx.toFixed(1)}" rx="3" fill="var(--gold)"/>`;
+      bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" font-weight="500" fill="var(--gold)">${NUM.format(h.consumoKwh)}</text>`;
+      bars += `<text x="${x+barW/2}" y="146" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600" fill="var(--ink)">${label}</text>`;
+    } else {
+      bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${hpx.toFixed(1)}" rx="3" fill="var(--accent)" fill-opacity="0.55"/>`;
+      bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">${NUM.format(h.consumoKwh)}</text>`;
+      bars += `<text x="${x+barW/2}" y="146" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="var(--muted)">${label}</text>`;
+    }
+  });
+  const gridY = baseY - gridVal * scale;
+  const width = startX + historico.length * step - gap + startX;
+  const gridLine = `<line x1="${startX}" y1="${gridY.toFixed(1)}" x2="${(width-startX).toFixed(1)}" y2="${gridY.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>`
+    + `<text x="${startX}" y="${(gridY-5).toFixed(1)}" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">${NUM.format(gridVal)} kWh</text>`;
+  return { inner: gridLine + bars, width: Math.max(700, width) };
+}
+
+// Gera o HTML autocontido do Demonstrativo de Energia para um lançamento (linha de Contas) de um cliente.
+function demonstrativoHTML(cliente, f){
+  const calc = calcularFatura(f, cliente);
+  const mesRef = mesRefDe(f);
+  const historico = historicoCliente(cliente.id, mesRef);
+  if(historico.length === 0) historico.push({ mesRef, consumoKwh: f.consumoKwh || 0 });
+  const chart = buildHistoricoSVG(historico);
+  const acumulado = acumuladoAno(cliente.id, mesRef, cliente);
+  const co2Mes = (f.consumoKwh || 0) * fatorEmissao();
+  const bandeiraLinha = (f.bandeira || 0) > 0
+    ? `<tr><td>Bandeira tarifária — ${f.bandeiraNome || 'Amarela'}</td><td>${BRL.format(f.bandeira)}</td></tr>`
+    : '';
+  const [ , mMes ] = mesRef.split('-').map(Number);
+  const mesRefCurto = `${MESES_ABREV[mMes-1]}/${mesRef.split('-')[0]}`;
+  const totalStr = BRL.format(calc.comDesconto);
+  const totalFigSize = totalStr.length > 13 ? 16 : totalStr.length > 11 ? 18 : totalStr.length > 9 ? 20 : 23;
+
+  return `<!doctype html>
+<title>Demonstrativo ${cliente.nome}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ink:#182019; --muted:#5c6b5f;
+    --accent:#2c7a4f; --accent-dark:#123d27;
+    --gold:#a9782b;
+    --line:#e1e7e0; --paper:#ffffff; --soft:#f2f6f2; --page-bg:#eef1ec;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--ink);font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;padding:28px 14px;-webkit-font-smoothing:antialiased;}
+  .page{max-width:780px;margin:0 auto;background:var(--paper);border-radius:12px;overflow:hidden;box-shadow:0 20px 44px -28px rgba(15,40,25,.35);display:flex;border:1px solid var(--line);}
+  aside{width:235px;flex:none;background:linear-gradient(175deg,var(--accent-dark),var(--accent) 85%);color:#fff;padding:26px 22px;display:flex;flex-direction:column;gap:20px;position:relative;}
+  aside .mark{width:30px;height:30px;flex:none;}
+  aside .wordmark{font-size:12.5px;font-weight:600;letter-spacing:.02em;line-height:1.3;margin:8px 0 0;}
+  aside .wordmark small{display:block;font-weight:400;opacity:.75;font-size:10.5px;margin-top:2px;}
+  .side-block{border-top:1px solid rgba(255,255,255,.2);padding-top:13px;}
+  .side-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;opacity:.72;margin:0 0 4px;font-weight:600;}
+  .side-value{margin:0;font-size:13.5px;font-weight:500;}
+  .side-total{margin-top:auto;background:rgba(255,255,255,.1);border-radius:10px;padding:15px 15px 13px;border:1px solid rgba(255,255,255,.18);}
+  .side-total .side-label{opacity:.85;}
+  .side-total .fig{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:700;margin:4px 0 0;white-space:nowrap;}
+  .side-pix{font-size:11px;opacity:.85;line-height:1.5;}
+  .side-pix b{display:block;font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:#fff;opacity:1;margin-top:2px;word-break:break-all;}
+  main{flex:1;padding:26px 30px 28px;min-width:0;}
+  .top-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:18px;padding-bottom:13px;border-bottom:2px solid var(--accent-dark);flex-wrap:wrap;}
+  .top-row h1{margin:0;font-size:17px;font-weight:700;}
+  .top-row span{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  .savings-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--soft);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:20px;}
+  .savings-banner p{margin:0;font-size:12.5px;color:var(--muted);}
+  .savings-banner .fig{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;color:var(--gold);}
+  h2.section{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-dark);margin:0 0 10px;}
+  section{margin-bottom:20px;}
+  section:last-of-type{margin-bottom:0;}
+  table.detail{width:100%;border-collapse:collapse;font-size:13px;}
+  table.detail td{padding:7px 0;border-bottom:1px solid var(--line);}
+  table.detail td:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  table.detail tr.total td{border-bottom:none;border-top:2px solid var(--ink);padding-top:9px;font-weight:700;font-size:14px;}
+  table.detail tr.total td:last-child{color:var(--accent-dark);}
+  .chart-wrap{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 12px 6px;overflow-x:auto;}
+  .chart-wrap svg{display:block;width:100%;height:auto;}
+  .chart-caption{font-size:10.5px;color:var(--muted);margin:5px 2px 0;}
+  .econ-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .econ-tile{border:1px solid var(--line);border-radius:8px;padding:10px 11px;}
+  .econ-tile .field-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 4px;font-weight:600;}
+  .econ-tile .val{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600;font-size:13.5px;}
+  .econ-tile.accent .val{color:var(--accent-dark);}
+  .econ-tile.gold .val{color:var(--gold);}
+  footer{max-width:780px;margin:10px auto 0;padding:0 4px;font-size:10.5px;color:var(--muted);text-align:center;}
+  @media print{
+    @page{ size:A4; margin:10mm; }
+    body{padding:0;background:var(--paper);}
+    .page{border-radius:0;border:none;box-shadow:none;max-width:none;}
+    aside{padding:16px 16px;gap:12px;}
+    .side-block{padding-top:8px;}
+    .side-value{font-size:12px;}
+    .side-total{padding:10px 11px 9px;}
+    .side-pix{font-size:10px;}
+    main{padding:16px 20px 18px;}
+    .top-row{margin-bottom:10px;padding-bottom:8px;}
+    .top-row h1{font-size:14.5px;}
+    .savings-banner{padding:8px 12px;margin-bottom:12px;}
+    .savings-banner .fig{font-size:14px;}
+    h2.section{font-size:10.5px;margin-bottom:6px;}
+    section{margin-bottom:12px;}
+    table.detail{font-size:11px;}
+    table.detail td{padding:4px 0;}
+    table.detail tr.total td{padding-top:6px;font-size:12px;}
+    .chart-wrap{padding:8px 8px 4px;}
+    .chart-wrap svg{min-width:0;width:100%;height:100px;}
+    .chart-caption{margin:4px 2px 0;font-size:9px;}
+    .econ-grid{gap:6px;}
+    .econ-tile{padding:7px 9px;}
+    .econ-tile .field-label{margin-bottom:3px;font-size:8.5px;}
+    .econ-tile .val{font-size:12px;}
+    footer{margin-top:8px;font-size:9px;}
+  }
+  @media (max-width:600px){
+    .page{flex-direction:column;}
+    aside{width:100%;flex-direction:row;flex-wrap:wrap;gap:14px 22px;align-items:center;}
+    aside > div:first-child{flex-basis:100%;}
+    .side-block{border-top:none;border-left:1px solid rgba(255,255,255,.2);padding-top:0;padding-left:12px;}
+    .side-total{margin-top:0;flex-basis:100%;}
+    .side-pix{flex-basis:100%;}
+    .econ-grid{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+<div class="page">
+  <aside>
+    <div>
+      <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="#f4c56a"/><g stroke="#f4c56a" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="1.4" x2="12" y2="4.1"/><line x1="12" y1="19.9" x2="12" y2="22.6"/><line x1="1.4" y1="12" x2="4.1" y2="12"/><line x1="19.9" y1="12" x2="22.6" y2="12"/><line x1="4.3" y1="4.3" x2="6.2" y2="6.2"/><line x1="17.8" y1="17.8" x2="19.7" y2="19.7"/><line x1="4.3" y1="19.7" x2="6.2" y2="17.8"/><line x1="17.8" y1="6.2" x2="19.7" y2="4.3"/></g></svg>
+    </div>
+    <div class="side-block">
+      <p class="side-label">Cliente</p>
+      <p class="side-value">${cliente.nome}</p>
+      ${cliente.endereco ? `<p class="side-value" style="opacity:.75;font-weight:400;font-size:12px;margin-top:3px;">${cliente.endereco}</p>` : ''}
+    </div>
+    <div class="side-block">
+      <p class="side-label">Unidade consumidora</p>
+      <p class="side-value">${cliente.uc || '—'}</p>
+    </div>
+    <div class="side-block">
+      <p class="side-label">Competência / Vencimento</p>
+      <p class="side-value">${mesRefCurto} · ${formatDataBR(f.vencimento)}</p>
+    </div>
+    <div class="side-total">
+      <p class="side-label">Total a pagar</p>
+      <p class="fig" style="font-size:${totalFigSize}px;">${totalStr}</p>
+    </div>
+    <div class="side-pix">
+      Chave Pix<b>${state.config.pixChave || '—'}</b>
+    </div>
+  </aside>
+  <main>
+    <div class="top-row"><h1>Demonstrativo de Energia</h1><span>${NUM.format(f.consumoKwh || 0)} kWh no mês</span></div>
+    <div class="savings-banner">
+      <p>Você economizou este mês</p>
+      <p class="fig">${BRL.format(calc.economia)}</p>
+    </div>
+    <section>
+      <h2 class="section">Detalhamento da conta</h2>
+      <table class="detail">
+        <tr><td>Energia consumida + uso do sistema (com desconto)</td><td>${BRL.format(calc.tarifaCombinada * (1 - (cliente.percentualDesconto||0)) * (f.consumoKwh||0))}</td></tr>
+        <tr><td>Contribuição de iluminação pública</td><td>${BRL.format(cliente.iluminacaoPublica || 0)}</td></tr>
+        ${bandeiraLinha}
+        <tr class="total"><td>Total a pagar</td><td>${BRL.format(calc.comDesconto)}</td></tr>
+      </table>
+    </section>
+    <section>
+      <h2 class="section">Histórico de consumo (kWh)</h2>
+      <div class="chart-wrap">
+        <svg viewBox="0 0 ${chart.width} 172" width="100%" role="img" aria-label="Consumo mensal, em kWh">${chart.inner}</svg>
+      </div>
+      <p class="chart-caption">Mês de referência em destaque.</p>
+    </section>
+    <section style="margin-bottom:0;">
+      <h2 class="section">Demonstrativo de economia</h2>
+      <div class="econ-grid">
+        <div class="econ-tile"><p class="field-label">Sem desconto</p><p class="val">${BRL.format(calc.semDesconto)}</p></div>
+        <div class="econ-tile accent"><p class="field-label">Com desconto</p><p class="val">${BRL.format(calc.comDesconto)}</p></div>
+        <div class="econ-tile gold"><p class="field-label">Economia no mês</p><p class="val">${BRL.format(calc.economia)}</p></div>
+        <div class="econ-tile gold"><p class="field-label">Economia no ano</p><p class="val">${BRL.format(acumulado.economia)}</p></div>
+        <div class="econ-tile accent"><p class="field-label">CO₂ no mês</p><p class="val">${NUM.format(Math.round(co2Mes*10)/10)} kg</p></div>
+        <div class="econ-tile accent"><p class="field-label">CO₂ no ano</p><p class="val">${NUM.format(Math.round(acumulado.co2*10)/10)} kg</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+<footer>${state.config.pixContato || ''}</footer>`;
+}
+
+function abrirDemonstrativo(fatId){
+  const f = state.faturamento.find(x => x.id === fatId);
+  if(!f) return;
+  const cliente = state.clientes.find(c => c.id === f.clienteId);
+  if(!cliente) return;
+  if(!f.tarifaConsumo || !f.tarifaUsoSistema){
+    alert('Preencha a tarifa de consumo e a tarifa de uso do sistema dessa linha (tiradas da conta Copel real do cliente) antes de gerar o Demonstrativo.');
+    return;
+  }
+  if(!f.vencimento){
+    alert('Preencha a data de vencimento dessa linha antes de gerar o Demonstrativo.');
+    return;
+  }
+  const html = demonstrativoHTML(cliente, f);
+  document.getElementById('demo-titulo').textContent = `${cliente.nome} — ${mesReferenciaLabelLongo(mesRefDe(f))}`;
+  document.getElementById('demo-frame').srcdoc = html;
+  document.getElementById('demo-overlay').style.display = 'flex';
+}
+
+document.getElementById('demo-fechar').addEventListener('click', () => {
+  document.getElementById('demo-overlay').style.display = 'none';
+  document.getElementById('demo-frame').srcdoc = '';
+});
+document.getElementById('demo-imprimir').addEventListener('click', () => {
+  const win = document.getElementById('demo-frame').contentWindow;
+  if(win) win.print();
+});
+
+// ---------- Importar conta Copel (PDF) ----------
+
+function fileParaBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1] || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+let importParsedAtual = null;
+
+document.getElementById('btn-importar-copel').addEventListener('click', () => {
+  document.getElementById('input-copel-pdf').value = '';
+  document.getElementById('input-copel-pdf').click();
+});
+
+document.getElementById('input-copel-pdf').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const btn = document.getElementById('btn-importar-copel');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Lendo PDF…';
+  btn.disabled = true;
+  try{
+    const base64 = await fileParaBase64(file);
+    const res = await fetch('/api/parse-copel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pdfBase64: base64 }),
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    abrirRevisaoImportacao(data);
+  }catch(err){
+    alert('Não consegui ler esse PDF: ' + err.message + '. Você pode lançar os dados manualmente em Contas.');
+  }finally{
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+  }
+});
+
+function abrirRevisaoImportacao(data){
+  importParsedAtual = data;
+  const sel = document.getElementById('imp-cliente');
+  sel.innerHTML = state.clientes.map(c => `<option value="${c.id}">${c.nome}${c.uc ? ' — UC ' + c.uc : ''}</option>`).join('');
+  const match = data.uc ? state.clientes.find(c => c.uc === data.uc) : null;
+  if(match) sel.value = match.id;
+
+  document.getElementById('imp-mes-ref').value = data.mesReferencia || '';
+  document.getElementById('imp-vencimento').value = data.vencimento || '';
+  document.getElementById('imp-consumo').value = data.consumoKwh ?? '';
+  document.getElementById('imp-tarifa-consumo').value = data.tarifaConsumo ?? '';
+  document.getElementById('imp-tarifa-sistema').value = data.tarifaUsoSistema ?? '';
+  document.getElementById('imp-bandeira-nome').value = data.bandeiraNome || '';
+  document.getElementById('imp-bandeira-valor').value = data.bandeiraValor ?? 0;
+  document.getElementById('imp-iluminacao').value = data.iluminacaoPublica ?? '';
+  document.getElementById('imp-concessionaria').value = data.valorConcessionaria ?? '';
+  document.getElementById('imp-saldo-scee').value = data.saldoScee ?? '';
+  document.getElementById('imp-atualizar-cadastro').checked = !match || (match.uc !== data.uc);
+
+  const warnEl = document.getElementById('import-warnings');
+  warnEl.innerHTML = (data.warnings && data.warnings.length)
+    ? '⚠️ ' + data.warnings.join('<br>⚠️ ')
+    : (match ? '' : '⚠️ Não achei nenhum cliente cadastrado com essa UC — confira o cliente selecionado abaixo.');
+
+  const histInfo = document.getElementById('import-historico-info');
+  histInfo.textContent = data.historico && data.historico.length
+    ? `Também encontrei ${data.historico.length} meses de histórico de consumo nessa conta — serão usados no gráfico do Demonstrativo.`
+    : '';
+
+  document.getElementById('import-overlay').style.display = 'flex';
+}
+
+document.getElementById('btn-import-cancelar').addEventListener('click', () => {
+  document.getElementById('import-overlay').style.display = 'none';
+  importParsedAtual = null;
+});
+
+document.getElementById('btn-import-aplicar').addEventListener('click', async () => {
+  const clienteId = document.getElementById('imp-cliente').value;
+  const cliente = state.clientes.find(c => c.id === clienteId);
+  if(!cliente){ alert('Selecione um cliente.'); return; }
+
+  const mesReferencia = document.getElementById('imp-mes-ref').value;
+  const vencimento = document.getElementById('imp-vencimento').value;
+  if(!mesReferencia || !vencimento){ alert('Preencha mês de referência e vencimento.'); return; }
+  const mes = vencimento.slice(0, 7); // mês de cobrança/vencimento — convenção já usada no app
+
+  const uc = importParsedAtual ? importParsedAtual.uc : null;
+  if(document.getElementById('imp-atualizar-cadastro').checked){
+    if(uc) cliente.uc = uc;
+    if(importParsedAtual && importParsedAtual.endereco && !cliente.endereco) cliente.endereco = importParsedAtual.endereco;
+  }
+
+  const camposNovos = {
+    mesReferencia,
+    vencimento,
+    consumoKwh: parseFloat(document.getElementById('imp-consumo').value) || 0,
+    tarifaConsumo: parseFloat(document.getElementById('imp-tarifa-consumo').value) || 0,
+    tarifaUsoSistema: parseFloat(document.getElementById('imp-tarifa-sistema').value) || 0,
+    bandeiraNome: document.getElementById('imp-bandeira-nome').value.trim(),
+    bandeira: parseFloat(document.getElementById('imp-bandeira-valor').value) || 0,
+    valorConcessionaria: parseFloat(document.getElementById('imp-concessionaria').value) || 0,
+    saldoScee: document.getElementById('imp-saldo-scee').value !== '' ? parseFloat(document.getElementById('imp-saldo-scee').value) : null,
+  };
+
+  let f = state.faturamento.find(x => x.clienteId === clienteId && x.mes === mes);
+  if(f){
+    Object.assign(f, camposNovos);
+  } else {
+    f = { id: 'f-' + mes + '-' + clienteId, clienteId, mes, pago: false, ...camposNovos };
+    state.faturamento.push(f);
+  }
+  const calc = calcularFatura(f, cliente);
+  f.valorCobrado = calc.comDesconto;
+
+  if(!state.historicoConsumo) state.historicoConsumo = [];
+  if(importParsedAtual && importParsedAtual.historico){
+    for(const h of importParsedAtual.historico){
+      const existente = state.historicoConsumo.find(x => x.clienteId === clienteId && x.mesReferencia === h.mesReferencia);
+      if(existente) existente.consumoKwh = h.consumoKwh;
+      else state.historicoConsumo.push({ clienteId, mesReferencia: h.mesReferencia, consumoKwh: h.consumoKwh });
+    }
+  }
+
+  document.getElementById('fat-mes').value = mes;
+  if(await saveData()){
+    document.getElementById('import-overlay').style.display = 'none';
+    importParsedAtual = null;
+    renderYearSelect();
+    renderMonthTabs();
+    render();
+  }
+});
 
 const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
@@ -676,7 +1312,6 @@ function renderFaturamento(){
     document.getElementById('faturamento-empty').style.display = 'block';
     return;
   }
-  const tarifaTotal = (state.config.tarifaConsumo || 0) + (state.config.tarifaUsoSistema || 0);
   const rows = state.faturamento
     .filter(f => f.mes === mes)
     .map(f => ({ ...f, cliente: state.clientes.find(c => c.id === f.clienteId) }))
@@ -686,25 +1321,43 @@ function renderFaturamento(){
   document.getElementById('faturamento-empty').style.display = rows.length ? 'none' : 'block';
 
   for(const f of rows){
-    const cobrado = calcularValorCobrado(f.cliente, f.consumoKwh, f.bandeira);
-    f.valorCobrado = cobrado; // mantém o state em sincronia com o que está na tela
-    const lucro = cobrado - f.valorConcessionaria;
+    const calc = calcularFatura(f, f.cliente);
+    f.valorCobrado = calc.comDesconto; // mantém o state em sincronia com o que está na tela
+    const lucro = calc.comDesconto - f.valorConcessionaria;
     const tr = document.createElement('tr');
     tr.dataset.id = f.id;
     tr.innerHTML = `
       <td>${f.cliente.nome}</td>
-      <td>R$ ${tarifaTotal.toFixed(6)}</td>
+      <td class="row-edit"><input type="month" data-field="mesReferencia" value="${f.mesReferencia || f.mes}"></td>
+      <td class="row-edit"><input type="date" data-field="vencimento" value="${f.vencimento || ''}"></td>
+      <td class="row-edit"><input type="number" step="0.000001" min="0" data-field="tarifaConsumo" value="${f.tarifaConsumo || ''}" placeholder="${(state.config.tarifaConsumo||0).toFixed(6)}"></td>
+      <td class="row-edit"><input type="number" step="0.000001" min="0" data-field="tarifaUsoSistema" value="${f.tarifaUsoSistema || ''}" placeholder="${(state.config.tarifaUsoSistema||0).toFixed(6)}"></td>
       <td>${(f.cliente.percentualDesconto * 100).toFixed(0)}%</td>
       <td class="row-edit"><input type="number" step="1" min="0" data-field="consumoKwh" value="${f.consumoKwh || 0}"></td>
       <td>${BRL.format(f.cliente.iluminacaoPublica || 0)}</td>
+      <td class="row-edit"><input type="text" data-field="bandeiraNome" value="${f.bandeiraNome || ''}" placeholder="Verde"></td>
       <td class="row-edit"><input type="number" step="0.01" min="0" data-field="bandeira" value="${f.bandeira || 0}"></td>
-      <td class="${cobrado >= 0 ? 'pos' : 'neg'}" data-cobrado>${BRL.format(cobrado)}</td>
+      <td class="${calc.comDesconto >= 0 ? 'pos' : 'neg'}" data-cobrado>${BRL.format(calc.comDesconto)}</td>
       <td class="row-edit"><input type="number" step="0.01" min="0" data-field="valorConcessionaria" value="${f.valorConcessionaria}"></td>
       <td class="${lucro >= 0 ? 'pos' : 'neg'}" data-lucro>${BRL.format(lucro)}</td>
+      <td class="row-edit"><input type="number" step="1" min="0" data-field="saldoScee" value="${f.saldoScee ?? ''}" placeholder="—" title="Saldo acumulado de energia SCEE nessa conta, em kWh"></td>
       <td><input type="checkbox" data-field="pago" ${f.pago ? 'checked' : ''}></td>
-      <td><button class="icon-btn" data-action="remove-fat" title="Remover linha">🗑️</button></td>`;
+      <td><div class="actions-row">
+        <button class="icon-btn" data-action="ver-demo" title="Ver / imprimir Demonstrativo">📄</button>
+        <button class="icon-btn" data-action="remove-fat" title="Remover linha">🗑️</button>
+      </div></td>`;
     tbody.appendChild(tr);
   }
+}
+
+// Monta a data de vencimento (AAAA-MM-DD) de um mês a partir do dia cadastrado do cliente,
+// ajustando para o último dia do mês quando o mês for mais curto (ex: dia 31 em abril -> dia 30).
+function vencimentoParaMes(diaVencimento, mes){
+  if(!diaVencimento || !mes) return '';
+  const [ano, mesNum] = mes.split('-').map(Number);
+  const ultimoDia = new Date(ano, mesNum, 0).getDate();
+  const dia = Math.min(diaVencimento, ultimoDia);
+  return `${mes}-${String(dia).padStart(2, '0')}`;
 }
 
 document.getElementById('btn-gerar-mes').addEventListener('click', () => {
@@ -714,13 +1367,18 @@ document.getElementById('btn-gerar-mes').addEventListener('click', () => {
   for(const c of ativos){
     const existe = state.faturamento.find(f => f.mes === mes && f.clienteId === c.id);
     if(!existe){
-      state.faturamento.push({ id: 'f-' + mes + '-' + c.id, clienteId: c.id, mes, consumoKwh: 0, bandeira: 0, valorCobrado: 0, valorConcessionaria: 0, pago: false });
+      state.faturamento.push({
+        id: 'f-' + mes + '-' + c.id, clienteId: c.id, mes, mesReferencia: mes, vencimento: vencimentoParaMes(c.diaVencimento, mes),
+        tarifaConsumo: state.config.tarifaConsumo || 0, tarifaUsoSistema: state.config.tarifaUsoSistema || 0,
+        consumoKwh: 0, bandeiraNome: '', bandeira: 0, valorCobrado: 0, valorConcessionaria: 0, saldoScee: null, pago: false,
+      });
     }
   }
   renderFaturamento();
   renderFaturamentoHistorico();
 });
 
+const CAMPOS_TEXTO_FAT = new Set(['mesReferencia', 'vencimento', 'bandeiraNome']);
 document.getElementById('tbody-faturamento').addEventListener('input', (e) => {
   const tr = e.target.closest('tr');
   const id = tr.dataset.id;
@@ -730,14 +1388,18 @@ document.getElementById('tbody-faturamento').addEventListener('input', (e) => {
   if(!field) return;
   if(field === 'pago'){
     f.pago = e.target.checked;
+  } else if(CAMPOS_TEXTO_FAT.has(field)){
+    f[field] = e.target.value;
   } else {
     f[field] = parseFloat(e.target.value) || 0;
-    const cobrado = calcularValorCobrado(cliente, f.consumoKwh, f.bandeira);
-    f.valorCobrado = cobrado;
-    const lucro = cobrado - f.valorConcessionaria;
+  }
+  if(!CAMPOS_TEXTO_FAT.has(field) || field !== 'pago'){
+    const calc = calcularFatura(f, cliente);
+    f.valorCobrado = calc.comDesconto;
+    const lucro = calc.comDesconto - f.valorConcessionaria;
     const cobradoCell = tr.querySelector('[data-cobrado]');
-    cobradoCell.textContent = BRL.format(cobrado);
-    cobradoCell.className = cobrado >= 0 ? 'pos' : 'neg';
+    cobradoCell.textContent = BRL.format(calc.comDesconto);
+    cobradoCell.className = calc.comDesconto >= 0 ? 'pos' : 'neg';
     const lucroCell = tr.querySelector('[data-lucro]');
     lucroCell.textContent = BRL.format(lucro);
     lucroCell.className = lucro >= 0 ? 'pos' : 'neg';
@@ -746,13 +1408,20 @@ document.getElementById('tbody-faturamento').addEventListener('input', (e) => {
 });
 
 document.getElementById('tbody-faturamento').addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-action="remove-fat"]');
-  if(!btn) return;
-  const tr = e.target.closest('tr');
-  const id = tr.dataset.id;
-  state.faturamento = state.faturamento.filter(x => x.id !== id);
-  tr.remove();
-  renderFaturamentoHistorico();
+  const removeBtn = e.target.closest('button[data-action="remove-fat"]');
+  if(removeBtn){
+    const tr = e.target.closest('tr');
+    const id = tr.dataset.id;
+    state.faturamento = state.faturamento.filter(x => x.id !== id);
+    tr.remove();
+    renderFaturamentoHistorico();
+    return;
+  }
+  const demoBtn = e.target.closest('button[data-action="ver-demo"]');
+  if(demoBtn){
+    const tr = e.target.closest('tr');
+    abrirDemonstrativo(tr.dataset.id);
+  }
 });
 
 document.getElementById('btn-salvar-fat').addEventListener('click', async () => {
@@ -851,6 +1520,9 @@ function renderConfigForm(){
   document.getElementById('cfg-investido').value = c.valorInvestido ?? '';
   document.getElementById('cfg-tarifa-consumo').value = c.tarifaConsumo ?? '';
   document.getElementById('cfg-tarifa-sistema').value = c.tarifaUsoSistema ?? '';
+  document.getElementById('cfg-pix-chave').value = c.pixChave ?? '';
+  document.getElementById('cfg-pix-contato').value = c.pixContato ?? '';
+  document.getElementById('cfg-fator-co2').value = c.fatorEmissaoCO2 ?? '';
 }
 
 document.getElementById('form-config').addEventListener('submit', async (e) => {
@@ -878,7 +1550,56 @@ document.getElementById('form-tarifas').addEventListener('submit', async (e) => 
   if(await saveData()) render();
 });
 
+document.getElementById('form-pagamento').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  state.config = {
+    ...state.config,
+    pixChave: document.getElementById('cfg-pix-chave').value.trim(),
+    pixContato: document.getElementById('cfg-pix-contato').value.trim(),
+    fatorEmissaoCO2: parseFloat(document.getElementById('cfg-fator-co2').value) || 0,
+  };
+  if(await saveData()) render();
+});
+
 document.getElementById('cfg-janela').addEventListener('change', renderDashboard);
+
+document.getElementById('btn-baixar-backup').addEventListener('click', () => {
+  const nomeArq = 'backup-cooperativa-solar-' + new Date().toISOString().slice(0,10) + '.json';
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nomeArq;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-restaurar-backup').addEventListener('click', () => {
+  document.getElementById('input-restaurar-backup').value = '';
+  document.getElementById('input-restaurar-backup').click();
+});
+
+document.getElementById('input-restaurar-backup').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const texto = await file.text();
+    const novo = JSON.parse(texto);
+    const ok = novo && typeof novo === 'object' && Array.isArray(novo.clientes) && Array.isArray(novo.faturamento) && Array.isArray(novo.financeiro) && novo.config;
+    if(!ok){ alert('Este arquivo não parece um backup válido desta cooperativa.'); return; }
+    if(!confirm('Isto vai SUBSTITUIR todos os dados atuais (' + state.clientes.length + ' clientes, ' + state.faturamento.length + ' lançamentos) pelo conteúdo do arquivo (' + novo.clientes.length + ' clientes, ' + novo.faturamento.length + ' lançamentos).\n\nEsta ação não pode ser desfeita pelo app. Continuar?')) return;
+    novo._rev = state._rev;
+    state = novo;
+    if(await saveData()){ alert('Backup restaurado com sucesso.'); render(); }
+  }catch(err){
+    alert('Não consegui ler esse arquivo: ' + err.message);
+  }
+});
+
+document.getElementById('btn-alterar-senha').addEventListener('click', () => {
+  localStorage.removeItem('coopApiKey');
+  apiKey = '';
+  if(pedirChaveAcesso('Digite a senha de acesso ao painel:')) loadData();
+});
 
 // navegação
 document.querySelectorAll('nav button').forEach(btn => {
@@ -887,6 +1608,7 @@ document.querySelectorAll('nav button').forEach(btn => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    document.getElementById('main-content').classList.toggle('wide', btn.dataset.view === 'faturamento' || btn.dataset.view === 'clientes');
   });
 });
 
@@ -905,6 +1627,23 @@ function setDefaultMonths(){
   }
   document.getElementById('fin-mes').value = proximo;
 }
+
+// ---------- tema claro/escuro ----------
+function aplicarTema(tema){
+  document.documentElement.dataset.theme = tema;
+  document.getElementById('theme-toggle').textContent = tema === 'dark' ? '☀️ Modo claro' : '🌙 Modo escuro';
+  try{ localStorage.setItem('coop-tema', tema); }catch(e){}
+}
+function temaAtual(){
+  try{ return localStorage.getItem('coop-tema'); }catch(e){ return null; }
+}
+// Primeira vez que o sistema roda aqui: começa no modo escuro (foi o que foi pedido).
+// Depois disso, respeita o que a pessoa escolheu da última vez.
+aplicarTema(temaAtual() || 'dark');
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  aplicarTema(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  if(chart) renderChart(state.financeiro.slice().sort((a,b) => a.mes.localeCompare(b.mes)));
+});
 
 loadData().then(() => { if(state){ setDefaultMonths(); renderFaturamento(); renderFaturamentoHistorico(); } });
 </script>

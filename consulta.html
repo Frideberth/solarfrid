@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta do cliente</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --surface-2:#eef2f7;
+    --ink:#16202e; --muted:#5b6b7d;
+    --border:#e1e6ee; --accent:#2563eb; --accent-dark:#1d4ed8;
+    --green:#1f8a5f; --green-bg:#e8f6ef; --red:#c1432f; --red-bg:#fbeae7;
+    --amber:#b8860b; --amber-bg:#fbf3de;
+    --radius:14px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0d1524; --card:#141d30; --surface-2:#1b2740;
+      --ink:#e7edf7; --muted:#8b9ab0;
+      --border:#25324a; --accent:#3b82f6; --accent-dark:#2563eb;
+      --green:#34d399; --green-bg:#123227; --red:#f87171; --red-bg:#3a1620;
+      --amber:#fbbf24; --amber-bg:#3a2e10;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);padding-bottom:40px;}
+  header{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;padding:22px 20px;}
+  header .coop{font-size:.8rem;opacity:.85;margin:0 0 4px;text-transform:uppercase;letter-spacing:.04em;}
+  header h1{margin:0;font-size:1.3rem;}
+  header .sub{margin:6px 0 0;font-size:.85rem;opacity:.9;}
+  main{max-width:640px;margin:0 auto;padding:18px 16px;}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+  .panel h2{margin:0 0 12px;font-size:1rem;}
+  .hint{color:var(--muted);font-size:.82rem;margin:8px 0 0;}
+  .status-card{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .status-card .valor{font-size:1.7rem;font-weight:700;}
+  .status-card .venc{color:var(--muted);font-size:.85rem;margin-top:4px;}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;padding:5px 12px;border-radius:999px;}
+  .badge.pago{background:var(--green-bg);color:var(--green);}
+  .badge.pendente{background:var(--amber-bg);color:var(--amber);}
+  .badge.atrasado{background:var(--red-bg);color:var(--red);}
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;}
+  th{text-align:left;color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  td{padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  .pix-row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;}
+  .pix-chave{font-weight:600;font-family:ui-monospace,Menlo,Consolas,monospace;}
+  .btn{border:1px solid var(--border);background:var(--surface-2);color:var(--ink);padding:6px 12px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--border);}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+  .empty-state h1{color:var(--ink);font-size:1.1rem;margin:0 0 8px;}
+  [hidden]{display:none!important;}
+</style>
+</head>
+<body>
+
+<div id="view-carregando" class="empty-state">
+  <h1>Carregando…</h1>
+  <p>Buscando seus dados.</p>
+</div>
+
+<div id="view-erro" class="empty-state" hidden>
+  <h1>Não foi possível abrir esta consulta</h1>
+  <p id="texto-erro">Este link parece inválido ou expirado. Confira o link recebido ou peça um novo.</p>
+</div>
+
+<div id="view-dados" hidden>
+  <header>
+    <p class="coop" id="nome-coop">Cooperativa Solar</p>
+    <h1 id="nome-cliente">—</h1>
+    <p class="sub" id="uc-cliente"></p>
+  </header>
+  <main>
+    <div class="panel">
+      <h2>Situação atual</h2>
+      <div class="status-card">
+        <div>
+          <div class="valor" id="valor-atual">—</div>
+          <div class="venc" id="venc-atual">—</div>
+        </div>
+        <span class="badge" id="badge-atual">—</span>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-pix" hidden>
+      <h2>Pagamento</h2>
+      <div class="pix-row">
+        <div>
+          <div class="hint" style="margin:0;">Chave Pix</div>
+          <div class="pix-chave" id="pix-chave">—</div>
+        </div>
+        <button type="button" class="btn" id="btn-copiar-pix">Copiar chave</button>
+      </div>
+      <p class="hint" id="pix-contato"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Histórico de consumo e pagamentos</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Mês</th><th>Consumo (kWh)</th><th>Saldo (kWh)</th><th>Valor</th><th>Situação</th></tr></thead>
+          <tbody id="tbody-historico"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="historico-vazio" hidden><p>Nenhum lançamento encontrado ainda.</p></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const NUM = new Intl.NumberFormat('pt-BR');
+const MES_FMT = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
+
+function mesLabel(mes){
+  const [y,m] = mes.split('-').map(Number);
+  return MES_FMT.format(new Date(y, m-1, 1)).replace('.', '');
+}
+function dataLabel(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-').map(Number);
+  return String(d).padStart(2,'0') + '/' + String(m).padStart(2,'0') + '/' + y;
+}
+function mostrar(id){
+  for(const v of ['view-carregando','view-erro','view-dados']) document.getElementById(v).hidden = (v !== id);
+}
+
+async function carregar(){
+  const token = new URLSearchParams(location.search).get('t');
+  if(!token){ document.getElementById('texto-erro').textContent = 'Link sem identificação do cliente.'; mostrar('view-erro'); return; }
+  try{
+    const res = await fetch('/api/consulta?t=' + encodeURIComponent(token));
+    const dados = await res.json();
+    if(!res.ok) throw new Error(dados.error || ('HTTP ' + res.status));
+    render(dados);
+    mostrar('view-dados');
+  }catch(err){
+    document.getElementById('texto-erro').textContent = err.message;
+    mostrar('view-erro');
+  }
+}
+
+function render(dados){
+  document.getElementById('nome-coop').textContent = dados.cooperativa.nome;
+  document.getElementById('nome-cliente').textContent = dados.cliente.nome;
+  document.getElementById('uc-cliente').textContent = dados.cliente.uc ? ('UC ' + dados.cliente.uc) : '';
+
+  const hist = dados.historico || [];
+  const atual = hist[0];
+  if(atual){
+    document.getElementById('valor-atual').textContent = typeof atual.valorCobrado === 'number' ? BRL.format(atual.valorCobrado) : '—';
+    document.getElementById('venc-atual').textContent = 'Referente a ' + mesLabel(atual.mes) + (atual.vencimento ? ' · vencimento ' + dataLabel(atual.vencimento) : '');
+    const badge = document.getElementById('badge-atual');
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const venc = atual.vencimento ? new Date(atual.vencimento + 'T00:00:00') : null;
+    if(atual.pago){ badge.className = 'badge pago'; badge.textContent = '✓ Pago'; }
+    else if(venc && venc < hoje){ badge.className = 'badge atrasado'; badge.textContent = 'Atrasado'; }
+    else{ badge.className = 'badge pendente'; badge.textContent = 'Pendente'; }
+  }else{
+    document.getElementById('valor-atual').textContent = '—';
+    document.getElementById('venc-atual').textContent = 'Nenhum lançamento ainda.';
+    document.getElementById('badge-atual').remove();
+  }
+
+  if(dados.cooperativa.pixChave){
+    document.getElementById('panel-pix').hidden = false;
+    document.getElementById('pix-chave').textContent = dados.cooperativa.pixChave;
+    document.getElementById('pix-contato').textContent = dados.cooperativa.pixContato ? ('Dúvidas: ' + dados.cooperativa.pixContato) : '';
+    document.getElementById('btn-copiar-pix').addEventListener('click', async () => {
+      try{ await navigator.clipboard.writeText(dados.cooperativa.pixChave); }catch(e){ prompt('Chave Pix:', dados.cooperativa.pixChave); }
+    });
+  }
+
+  const tbody = document.getElementById('tbody-historico');
+  tbody.innerHTML = '';
+  document.getElementById('historico-vazio').hidden = hist.length > 0;
+  for(const f of hist){
+    const tr = document.createElement('tr');
+    const situacao = f.pago ? '✓ Pago' : 'Pendente';
+    tr.innerHTML = `
+      <td>${mesLabel(f.mes)}</td>
+      <td>${typeof f.consumoKwh === 'number' ? NUM.format(f.consumoKwh) : '—'}</td>
+      <td>${typeof f.saldoScee === 'number' ? NUM.format(f.saldoScee) : '—'}</td>
+      <td>${typeof f.valorCobrado === 'number' ? BRL.format(f.valorCobrado) : '—'}</td>
+      <td>${situacao}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+carregar();
+</script>
+</body>
+</html>
