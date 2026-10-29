@@ -1,4 +1,5 @@
 const { getStore } = require('@netlify/blobs');
+// build: usa BLOBS_TOKEN + BLOBS_SITE_ID (config manual) — 2026-10-29
 
 // Dados iniciais extraídos da planilha PAINEL RETORNO USINA SOLAR:
 // - clientes e faturamento de set/2026 (aba "PAINEL SETEMBRO 2026")
@@ -97,7 +98,11 @@ exports.handler = async (event) => {
       return { statusCode: 401, headers: HEADERS, body: JSON.stringify({ error: 'Senha de acesso inválida ou não informada.' }) };
     }
 
-    const store = getStore('coop-solar');
+    const store = getStore({
+      name: 'coop-solar',
+      siteID: process.env.BLOBS_SITE_ID,
+      token: process.env.BLOBS_TOKEN,
+    });
 
     if (event.httpMethod === 'GET') {
       let data = await store.get('data', { type: 'json' });
