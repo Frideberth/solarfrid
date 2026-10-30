@@ -45,11 +45,19 @@
   table.detail td:nth-child(2),table.detail th:nth-child(2){font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
   table.detail td:nth-child(3),table.detail th:nth-child(3){font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;}
   table.detail tr:last-child td{border-bottom:none;}
+  table.detail tr.total td{border-bottom:none;border-top:2px solid var(--ink);padding-top:9px;font-weight:700;font-size:14px;}
+  table.detail tr.total td:last-child{color:var(--accent-dark);}
   .situacao-pago{color:var(--accent-dark);font-weight:600;}
   .situacao-pendente{color:var(--gold);font-weight:600;}
-  .pix-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
-  .btn-copiar{border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;}
-  .btn-copiar:hover{background:var(--line);}
+  .savings-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--soft);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:20px;}
+  .savings-banner p{margin:0;font-size:12.5px;color:var(--muted);}
+  .savings-banner .fig{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;color:var(--gold);}
+  .econ-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .econ-tile{border:1px solid var(--line);border-radius:8px;padding:10px 11px;}
+  .econ-tile .field-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 4px;font-weight:600;}
+  .econ-tile .val{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600;font-size:13.5px;}
+  .econ-tile.accent .val{color:var(--accent-dark);}
+  .econ-tile.gold .val{color:var(--gold);}
   footer{max-width:780px;margin:10px auto 0;padding:0 4px;font-size:10.5px;color:var(--muted);text-align:center;}
   .empty-state{text-align:center;padding:60px 20px;color:var(--muted);max-width:420px;margin:0 auto;}
   .empty-state h1{color:var(--ink);font-size:16px;margin:0 0 8px;font-weight:700;}
@@ -62,6 +70,7 @@
     .side-total{margin-top:0;flex-basis:100%;}
     .side-pix{flex-basis:100%;}
     main{padding:20px 18px 22px;}
+    .econ-grid{grid-template-columns:repeat(2,1fr);}
   }
 </style>
 </head>
@@ -107,12 +116,33 @@
     </aside>
     <main>
       <div class="top-row"><h1>Consulta de débitos e consumo</h1><span id="s-kwh-mes">—</span></div>
+      <div class="savings-banner" id="savings-banner" hidden>
+        <p>Você economizou este mês</p>
+        <p class="fig" id="s-economia-mes">—</p>
+      </div>
+      <section id="section-detalhe" hidden>
+        <h2 class="section">Detalhamento da conta</h2>
+        <table class="detail">
+          <tbody id="tbody-detalhe"></tbody>
+        </table>
+      </section>
       <section>
         <h2 class="section">Histórico de consumo (kWh)</h2>
         <div class="chart-wrap" id="chart-wrap">
           <svg id="chart-svg" viewBox="0 0 700 172" width="100%" role="img" aria-label="Consumo mensal, em kWh"></svg>
         </div>
         <p class="chart-caption">Mês de referência atual em destaque.</p>
+      </section>
+      <section id="section-economia" hidden>
+        <h2 class="section">Demonstrativo de economia</h2>
+        <div class="econ-grid">
+          <div class="econ-tile"><p class="field-label">Sem desconto</p><p class="val" id="econ-sem-desconto">—</p></div>
+          <div class="econ-tile accent"><p class="field-label">Com desconto</p><p class="val" id="econ-com-desconto">—</p></div>
+          <div class="econ-tile gold"><p class="field-label">Economia no mês</p><p class="val" id="econ-economia-mes">—</p></div>
+          <div class="econ-tile gold"><p class="field-label">Economia no ano</p><p class="val" id="econ-economia-ano">—</p></div>
+          <div class="econ-tile accent"><p class="field-label">CO₂ no mês</p><p class="val" id="econ-co2-mes">—</p></div>
+          <div class="econ-tile accent"><p class="field-label">CO₂ no ano</p><p class="val" id="econ-co2-ano">—</p></div>
+        </div>
       </section>
       <section style="margin-bottom:0;">
         <h2 class="section">Histórico de pagamentos</h2>
@@ -232,14 +262,42 @@ function render(dados){
     document.getElementById('s-badge').remove();
   }
 
+  if(dados.atual){
+    const a = dados.atual;
+    document.getElementById('savings-banner').hidden = false;
+    document.getElementById('s-economia-mes').textContent = BRL.format(a.economiaMes);
+
+    document.getElementById('section-detalhe').hidden = false;
+    const linhas = [];
+    linhas.push(`<tr><td>Energia consumida + uso do sistema (com desconto)</td><td style="text-align:right;">${BRL.format(a.energiaComDesconto)}</td></tr>`);
+    linhas.push(`<tr><td>Contribuição de iluminação pública</td><td style="text-align:right;">${BRL.format(a.iluminacaoPublica)}</td></tr>`);
+    if(a.bandeira > 0){
+      linhas.push(`<tr><td>Bandeira tarifária — ${a.bandeiraNome || 'Amarela'}</td><td style="text-align:right;">${BRL.format(a.bandeira)}</td></tr>`);
+    }
+    linhas.push(`<tr class="total"><td>Total a pagar</td><td style="text-align:right;">${BRL.format(a.comDesconto)}</td></tr>`);
+    document.getElementById('tbody-detalhe').innerHTML = linhas.join('');
+
+    document.getElementById('section-economia').hidden = false;
+    document.getElementById('econ-sem-desconto').textContent = BRL.format(a.semDesconto);
+    document.getElementById('econ-com-desconto').textContent = BRL.format(a.comDesconto);
+    document.getElementById('econ-economia-mes').textContent = BRL.format(a.economiaMes);
+    document.getElementById('econ-economia-ano').textContent = BRL.format(a.economiaAno);
+    document.getElementById('econ-co2-mes').textContent = NUM.format(a.co2Mes) + ' kg';
+    document.getElementById('econ-co2-ano').textContent = NUM.format(a.co2Ano) + ' kg';
+  }
+
   if(dados.cooperativa.pixChave){
     document.getElementById('s-pix-wrap').hidden = false;
     document.getElementById('s-pix-chave').textContent = dados.cooperativa.pixChave;
   }
   document.getElementById('s-rodape').textContent = dados.cooperativa.pixContato || '';
 
-  // gráfico: ordem cronológica crescente, últimos 12 meses
-  const paraGrafico = hist.slice(0, 12).slice().reverse();
+  // gráfico: ordem cronológica crescente, últimos até 12 meses — usa o histórico
+  // combinado (contas completas + consumo importado de contas antigas), igual ao
+  // gráfico do Demonstrativo (PDF); se não vier, cai de volta pro histórico de contas.
+  const paraGrafico = (dados.consumoHistorico && dados.consumoHistorico.length)
+    ? dados.consumoHistorico.map(h => ({ mes: h.mesReferencia, consumoKwh: h.consumoKwh }))
+    : hist.slice(0, 12).slice().reverse();
   const chartEl = document.getElementById('chart-svg');
   if(paraGrafico.length){
     const chart = buildHistoricoSVG(paraGrafico);
