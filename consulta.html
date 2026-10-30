@@ -4,54 +4,65 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Consulta do cliente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   :root{
-    --bg:#f4f6f8; --card:#ffffff; --surface-2:#eef2f7;
-    --ink:#16202e; --muted:#5b6b7d;
-    --border:#e1e6ee; --accent:#2563eb; --accent-dark:#1d4ed8;
-    --green:#1f8a5f; --green-bg:#e8f6ef; --red:#c1432f; --red-bg:#fbeae7;
-    --amber:#b8860b; --amber-bg:#fbf3de;
-    --radius:14px;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#0d1524; --card:#141d30; --surface-2:#1b2740;
-      --ink:#e7edf7; --muted:#8b9ab0;
-      --border:#25324a; --accent:#3b82f6; --accent-dark:#2563eb;
-      --green:#34d399; --green-bg:#123227; --red:#f87171; --red-bg:#3a1620;
-      --amber:#fbbf24; --amber-bg:#3a2e10;
-    }
+    --ink:#182019; --muted:#5c6b5f;
+    --accent:#2c7a4f; --accent-dark:#123d27;
+    --gold:#a9782b; --red:#a3402f; --red-bg:#f8ebe8;
+    --line:#e1e7e0; --paper:#ffffff; --soft:#f2f6f2; --page-bg:#eef1ec;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);padding-bottom:40px;}
-  header{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;padding:22px 20px;}
-  header .coop{font-size:.8rem;opacity:.85;margin:0 0 4px;text-transform:uppercase;letter-spacing:.04em;}
-  header h1{margin:0;font-size:1.3rem;}
-  header .sub{margin:6px 0 0;font-size:.85rem;opacity:.9;}
-  main{max-width:640px;margin:0 auto;padding:18px 16px;}
-  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
-  .panel h2{margin:0 0 12px;font-size:1rem;}
-  .hint{color:var(--muted);font-size:.82rem;margin:8px 0 0;}
-  .status-card{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
-  .status-card .valor{font-size:1.7rem;font-weight:700;}
-  .status-card .venc{color:var(--muted);font-size:.85rem;margin-top:4px;}
-  .badge{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;padding:5px 12px;border-radius:999px;}
-  .badge.pago{background:var(--green-bg);color:var(--green);}
-  .badge.pendente{background:var(--amber-bg);color:var(--amber);}
-  .badge.atrasado{background:var(--red-bg);color:var(--red);}
-  .table-scroll{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;font-size:.88rem;}
-  th{text-align:left;color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
-  td{padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
-  tr:last-child td{border-bottom:none;}
-  .pix-row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;}
-  .pix-chave{font-weight:600;font-family:ui-monospace,Menlo,Consolas,monospace;}
-  .btn{border:1px solid var(--border);background:var(--surface-2);color:var(--ink);padding:6px 12px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;}
-  .btn:hover{background:var(--border);}
-  .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
-  .empty-state h1{color:var(--ink);font-size:1.1rem;margin:0 0 8px;}
+  body{margin:0;background:var(--page-bg);color:var(--ink);font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;padding:28px 14px;-webkit-font-smoothing:antialiased;}
+  .page{max-width:780px;margin:0 auto;background:var(--paper);border-radius:12px;overflow:hidden;box-shadow:0 20px 44px -28px rgba(15,40,25,.35);display:flex;border:1px solid var(--line);}
+  aside{width:235px;flex:none;background:linear-gradient(175deg,var(--accent-dark),var(--accent) 85%);color:#fff;padding:26px 22px;display:flex;flex-direction:column;gap:20px;position:relative;}
+  aside .mark{width:30px;height:30px;flex:none;}
+  .side-block{border-top:1px solid rgba(255,255,255,.2);padding-top:13px;}
+  .side-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;opacity:.72;margin:0 0 4px;font-weight:600;}
+  .side-value{margin:0;font-size:13.5px;font-weight:500;}
+  .side-total{margin-top:auto;background:rgba(255,255,255,.1);border-radius:10px;padding:15px 15px 13px;border:1px solid rgba(255,255,255,.18);}
+  .side-total .side-label{opacity:.85;}
+  .side-total .fig{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:700;font-size:22px;margin:4px 0 0;white-space:nowrap;}
+  .side-total .badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-top:9px;background:rgba(255,255,255,.16);}
+  .side-total .badge.atrasado{background:#d9897c;color:#3a1109;}
+  .side-pix{font-size:11px;opacity:.85;line-height:1.5;}
+  .side-pix b{display:block;font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:#fff;opacity:1;margin-top:2px;word-break:break-all;}
+  main{flex:1;padding:26px 30px 28px;min-width:0;}
+  .top-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:18px;padding-bottom:13px;border-bottom:2px solid var(--accent-dark);flex-wrap:wrap;}
+  .top-row h1{margin:0;font-size:17px;font-weight:700;}
+  .top-row span{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  h2.section{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-dark);margin:0 0 10px;}
+  section{margin-bottom:20px;}
+  section:last-of-type{margin-bottom:0;}
+  .chart-wrap{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 12px 6px;overflow-x:auto;}
+  .chart-wrap svg{display:block;width:100%;height:auto;}
+  .chart-caption{font-size:10.5px;color:var(--muted);margin:5px 2px 0;}
+  table.detail{width:100%;border-collapse:collapse;font-size:13px;}
+  table.detail th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:0 0 7px;border-bottom:1px solid var(--line);}
+  table.detail td{padding:8px 0;border-bottom:1px solid var(--line);}
+  table.detail td:nth-child(2),table.detail th:nth-child(2){font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  table.detail td:nth-child(3),table.detail th:nth-child(3){font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;}
+  table.detail tr:last-child td{border-bottom:none;}
+  .situacao-pago{color:var(--accent-dark);font-weight:600;}
+  .situacao-pendente{color:var(--gold);font-weight:600;}
+  .pix-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .btn-copiar{border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-copiar:hover{background:var(--line);}
+  footer{max-width:780px;margin:10px auto 0;padding:0 4px;font-size:10.5px;color:var(--muted);text-align:center;}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);max-width:420px;margin:0 auto;}
+  .empty-state h1{color:var(--ink);font-size:16px;margin:0 0 8px;font-weight:700;}
   [hidden]{display:none!important;}
+  @media (max-width:600px){
+    .page{flex-direction:column;}
+    aside{width:100%;flex-direction:row;flex-wrap:wrap;gap:14px 22px;align-items:center;}
+    aside > div:first-child{flex-basis:100%;}
+    .side-block{border-top:none;border-left:1px solid rgba(255,255,255,.2);padding-top:0;padding-left:12px;}
+    .side-total{margin-top:0;flex-basis:100%;}
+    .side-pix{flex-basis:100%;}
+    main{padding:20px 18px 22px;}
+  }
 </style>
 </head>
 <body>
@@ -67,56 +78,68 @@
 </div>
 
 <div id="view-dados" hidden>
-  <header>
-    <p class="coop" id="nome-coop">Cooperativa Solar</p>
-    <h1 id="nome-cliente">—</h1>
-    <p class="sub" id="uc-cliente"></p>
-  </header>
-  <main>
-    <div class="panel">
-      <h2>Situação atual</h2>
-      <div class="status-card">
-        <div>
-          <div class="valor" id="valor-atual">—</div>
-          <div class="venc" id="venc-atual">—</div>
-        </div>
-        <span class="badge" id="badge-atual">—</span>
+  <div class="page">
+    <aside>
+      <div>
+        <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="#f4c56a"/><g stroke="#f4c56a" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="1.4" x2="12" y2="4.1"/><line x1="12" y1="19.9" x2="12" y2="22.6"/><line x1="1.4" y1="12" x2="4.1" y2="12"/><line x1="19.9" y1="12" x2="22.6" y2="12"/><line x1="4.3" y1="4.3" x2="6.2" y2="6.2"/><line x1="17.8" y1="17.8" x2="19.7" y2="19.7"/><line x1="4.3" y1="19.7" x2="6.2" y2="17.8"/><line x1="17.8" y1="6.2" x2="19.7" y2="4.3"/></g></svg>
       </div>
-    </div>
-
-    <div class="panel" id="panel-pix" hidden>
-      <h2>Pagamento</h2>
-      <div class="pix-row">
-        <div>
-          <div class="hint" style="margin:0;">Chave Pix</div>
-          <div class="pix-chave" id="pix-chave">—</div>
-        </div>
-        <button type="button" class="btn" id="btn-copiar-pix">Copiar chave</button>
+      <div class="side-block">
+        <p class="side-label">Cliente</p>
+        <p class="side-value" id="s-nome">—</p>
+        <p class="side-value" id="s-endereco" style="opacity:.75;font-weight:400;font-size:12px;margin-top:3px;" hidden></p>
       </div>
-      <p class="hint" id="pix-contato"></p>
-    </div>
-
-    <div class="panel">
-      <h2>Histórico de consumo e pagamentos</h2>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th>Mês</th><th>Consumo (kWh)</th><th>Valor</th><th>Situação</th></tr></thead>
+      <div class="side-block">
+        <p class="side-label">Unidade consumidora</p>
+        <p class="side-value" id="s-uc">—</p>
+      </div>
+      <div class="side-block">
+        <p class="side-label">Competência / Vencimento</p>
+        <p class="side-value" id="s-competencia">—</p>
+      </div>
+      <div class="side-total">
+        <p class="side-label">Total a pagar</p>
+        <p class="fig" id="s-total">—</p>
+        <span class="badge" id="s-badge">—</span>
+      </div>
+      <div class="side-pix" id="s-pix-wrap" hidden>
+        Chave Pix<b id="s-pix-chave">—</b>
+      </div>
+    </aside>
+    <main>
+      <div class="top-row"><h1>Consulta de débitos e consumo</h1><span id="s-kwh-mes">—</span></div>
+      <section>
+        <h2 class="section">Histórico de consumo (kWh)</h2>
+        <div class="chart-wrap" id="chart-wrap">
+          <svg id="chart-svg" viewBox="0 0 700 172" width="100%" role="img" aria-label="Consumo mensal, em kWh"></svg>
+        </div>
+        <p class="chart-caption">Mês de referência atual em destaque.</p>
+      </section>
+      <section style="margin-bottom:0;">
+        <h2 class="section">Histórico de pagamentos</h2>
+        <table class="detail">
+          <thead><tr><th>Mês</th><th>Consumo</th><th>Valor</th><th>Situação</th></tr></thead>
           <tbody id="tbody-historico"></tbody>
         </table>
-      </div>
-      <div class="empty-state" id="historico-vazio" hidden><p>Nenhum lançamento encontrado ainda.</p></div>
-    </div>
-  </main>
+        <div class="empty-state" id="historico-vazio" hidden style="padding:20px 0;"><p>Nenhum lançamento encontrado ainda.</p></div>
+      </section>
+    </main>
+  </div>
+  <footer id="s-rodape"></footer>
 </div>
 
 <script>
 const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const NUM = new Intl.NumberFormat('pt-BR');
+const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const MES_FMT = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
 
 function mesLabel(mes){
   const [y,m] = mes.split('-').map(Number);
   return MES_FMT.format(new Date(y, m-1, 1)).replace('.', '');
+}
+function mesCurto(mes){
+  const [y,m] = mes.split('-').map(Number);
+  return `${MESES_ABREV[m-1]}/${String(y).slice(2)}`;
 }
 function dataLabel(iso){
   if(!iso) return '—';
@@ -125,6 +148,43 @@ function dataLabel(iso){
 }
 function mostrar(id){
   for(const v of ['view-carregando','view-erro','view-dados']) document.getElementById(v).hidden = (v !== id);
+}
+
+function roundGrid(v){
+  if(v <= 0) return 100;
+  const passos = [100, 200, 500, 1000, 1500, 2000, 3000, 5000];
+  for(const p of passos) if(v <= p) return p;
+  return Math.ceil(v / 1000) * 1000;
+}
+
+function buildHistoricoSVG(historico){
+  const valores = historico.map(h => h.consumoKwh || 0);
+  const max = Math.max(...valores, 1);
+  const gridVal = roundGrid(max);
+  const baseY = 130, chartH = 90, startX = 20, barW = 40, gap = 14, step = barW + gap;
+  const scale = chartH / gridVal;
+  let bars = '';
+  historico.forEach((h, i) => {
+    const x = startX + i * step;
+    const hpx = (h.consumoKwh || 0) * scale;
+    const y = baseY - hpx;
+    const atual = i === historico.length - 1;
+    const label = mesCurto(h.mes);
+    if(atual){
+      bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${hpx.toFixed(1)}" rx="3" fill="var(--gold)"/>`;
+      bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" font-weight="500" fill="var(--gold)">${NUM.format(h.consumoKwh||0)}</text>`;
+      bars += `<text x="${x+barW/2}" y="146" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600" fill="var(--ink)">${label}</text>`;
+    }else{
+      bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${hpx.toFixed(1)}" rx="3" fill="var(--accent)" fill-opacity="0.55"/>`;
+      bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">${NUM.format(h.consumoKwh||0)}</text>`;
+      bars += `<text x="${x+barW/2}" y="146" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="var(--muted)">${label}</text>`;
+    }
+  });
+  const gridY = baseY - gridVal * scale;
+  const width = startX + historico.length * step - gap + startX;
+  const gridLine = `<line x1="${startX}" y1="${gridY.toFixed(1)}" x2="${(width-startX).toFixed(1)}" y2="${gridY.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>`
+    + `<text x="${startX}" y="${(gridY-5).toFixed(1)}" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">${NUM.format(gridVal)} kWh</text>`;
+  return { inner: gridLine + bars, width: Math.max(700, width) };
 }
 
 async function carregar(){
@@ -143,47 +203,65 @@ async function carregar(){
 }
 
 function render(dados){
-  document.getElementById('nome-coop').textContent = dados.cooperativa.nome;
-  document.getElementById('nome-cliente').textContent = dados.cliente.nome;
-  document.getElementById('uc-cliente').textContent = dados.cliente.uc ? ('UC ' + dados.cliente.uc) : '';
+  const hist = (dados.historico || []).slice();
+  const atual = hist[0]; // API já manda em ordem decrescente (mês mais recente primeiro)
 
-  const hist = dados.historico || [];
-  const atual = hist[0];
+  document.getElementById('s-nome').textContent = dados.cliente.nome;
+  if(dados.cliente.endereco){
+    const el = document.getElementById('s-endereco');
+    el.textContent = dados.cliente.endereco;
+    el.hidden = false;
+  }
+  document.getElementById('s-uc').textContent = dados.cliente.uc || '—';
+
   if(atual){
-    document.getElementById('valor-atual').textContent = typeof atual.valorCobrado === 'number' ? BRL.format(atual.valorCobrado) : '—';
-    document.getElementById('venc-atual').textContent = 'Referente a ' + mesLabel(atual.mes) + (atual.vencimento ? ' · vencimento ' + dataLabel(atual.vencimento) : '');
-    const badge = document.getElementById('badge-atual');
+    document.getElementById('s-competencia').textContent = mesCurto(atual.mes) + (atual.vencimento ? ' · ' + dataLabel(atual.vencimento) : '');
+    document.getElementById('s-total').textContent = typeof atual.valorCobrado === 'number' ? BRL.format(atual.valorCobrado) : '—';
+    document.getElementById('s-kwh-mes').textContent = (typeof atual.consumoKwh === 'number' ? NUM.format(atual.consumoKwh) : '—') + ' kWh no mês';
+
+    const badge = document.getElementById('s-badge');
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const venc = atual.vencimento ? new Date(atual.vencimento + 'T00:00:00') : null;
-    if(atual.pago){ badge.className = 'badge pago'; badge.textContent = '✓ Pago'; }
+    if(atual.pago){ badge.className = 'badge'; badge.textContent = '✓ Pago'; }
     else if(venc && venc < hoje){ badge.className = 'badge atrasado'; badge.textContent = 'Atrasado'; }
-    else{ badge.className = 'badge pendente'; badge.textContent = 'Pendente'; }
+    else{ badge.className = 'badge'; badge.textContent = 'Pendente'; }
   }else{
-    document.getElementById('valor-atual').textContent = '—';
-    document.getElementById('venc-atual').textContent = 'Nenhum lançamento ainda.';
-    document.getElementById('badge-atual').remove();
+    document.getElementById('s-competencia').textContent = '—';
+    document.getElementById('s-total').textContent = '—';
+    document.getElementById('s-kwh-mes').textContent = 'Nenhum lançamento ainda';
+    document.getElementById('s-badge').remove();
   }
 
   if(dados.cooperativa.pixChave){
-    document.getElementById('panel-pix').hidden = false;
-    document.getElementById('pix-chave').textContent = dados.cooperativa.pixChave;
-    document.getElementById('pix-contato').textContent = dados.cooperativa.pixContato ? ('Dúvidas: ' + dados.cooperativa.pixContato) : '';
-    document.getElementById('btn-copiar-pix').addEventListener('click', async () => {
-      try{ await navigator.clipboard.writeText(dados.cooperativa.pixChave); }catch(e){ prompt('Chave Pix:', dados.cooperativa.pixChave); }
-    });
+    document.getElementById('s-pix-wrap').hidden = false;
+    document.getElementById('s-pix-chave').textContent = dados.cooperativa.pixChave;
+  }
+  document.getElementById('s-rodape').textContent = dados.cooperativa.pixContato || '';
+
+  // gráfico: ordem cronológica crescente, últimos 12 meses
+  const paraGrafico = hist.slice(0, 12).slice().reverse();
+  const chartEl = document.getElementById('chart-svg');
+  if(paraGrafico.length){
+    const chart = buildHistoricoSVG(paraGrafico);
+    chartEl.setAttribute('viewBox', `0 0 ${chart.width} 172`);
+    chartEl.innerHTML = chart.inner;
+  }else{
+    document.getElementById('chart-wrap').hidden = true;
   }
 
+  // tabela: ordem decrescente (mais recente primeiro), como já vem da API
   const tbody = document.getElementById('tbody-historico');
   tbody.innerHTML = '';
   document.getElementById('historico-vazio').hidden = hist.length > 0;
   for(const f of hist){
     const tr = document.createElement('tr');
-    const situacao = f.pago ? '✓ Pago' : 'Pendente';
+    const situacaoClasse = f.pago ? 'situacao-pago' : 'situacao-pendente';
+    const situacaoTexto = f.pago ? '✓ Pago' : 'Pendente';
     tr.innerHTML = `
       <td>${mesLabel(f.mes)}</td>
-      <td>${typeof f.consumoKwh === 'number' ? NUM.format(f.consumoKwh) : '—'}</td>
+      <td>${typeof f.consumoKwh === 'number' ? NUM.format(f.consumoKwh) + ' kWh' : '—'}</td>
       <td>${typeof f.valorCobrado === 'number' ? BRL.format(f.valorCobrado) : '—'}</td>
-      <td>${situacao}</td>`;
+      <td class="${situacaoClasse}">${situacaoTexto}</td>`;
     tbody.appendChild(tr);
   }
 }
