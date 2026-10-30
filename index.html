@@ -1153,9 +1153,10 @@ async function enviarCobrancaWhatsApp(fatId){
   const calc = calcularFatura(f, cliente);
   const link = `${location.origin}/consulta.html?t=${cliente.tokenConsulta}`;
   const mensagem = `Olá, ${cliente.nome}! Sua conta de energia solar de ${mesLabel(f.mes)} está disponível.\n\n`
-    + `Valor: ${BRL.format(calc.comDesconto)}\n`
     + `Vencimento: ${formatDataBR(f.vencimento)}\n\n`
-    + `Confira os detalhes da conta, seu histórico de consumo e a chave Pix aqui:\n${link}`
+    + `Confira os detalhes da conta, seu histórico de consumo e a chave Pix aqui:\n${link}\n\n`
+    + `Valor a pagar: ${BRL.format(calc.comDesconto)}`
+    + (state.config.pixChave ? `\nPix para pagamento: ${state.config.pixChave}` : '')
     + (state.config.pixContato ? `\n\nDúvidas: ${state.config.pixContato}` : '');
 
   window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
