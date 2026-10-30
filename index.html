@@ -212,6 +212,7 @@
         <div><label for="cl-dia">Vencimento</label><input type="number" id="cl-dia" min="1" max="31" required></div>
         <div><label for="cl-desc">% de desconto</label><input type="number" id="cl-desc" min="0" max="100" step="0.1" required></div>
         <div><label for="cl-ilum">Iluminação pública (R$)</label><input type="number" id="cl-ilum" min="0" step="0.01" value="0"></div>
+        <div><label for="cl-telefone">Telefone (WhatsApp)</label><input type="text" id="cl-telefone" placeholder="(43) 99999-9999"></div>
         <div><button type="submit" class="btn">Adicionar</button></div>
       </form>
     </div>
@@ -220,7 +221,7 @@
       <h2>Clientes cadastrados</h2>
       <div class="table-scroll">
         <table class="tbl-clientes">
-          <thead><tr><th>Nome</th><th>Endereço</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Ilum. pública</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Nome</th><th>Endereço</th><th>UC</th><th>Vencimento</th><th>Desconto</th><th>Ilum. pública</th><th>Telefone</th><th>Status</th><th></th></tr></thead>
           <tbody id="tbody-clientes"></tbody>
         </table>
       </div>
@@ -685,6 +686,7 @@ function renderClientes(){
       <td>Dia ${c.diaVencimento}</td>
       <td>${(c.percentualDesconto*100).toFixed(0)}%</td>
       <td>${BRL.format(c.iluminacaoPublica || 0)}</td>
+      <td>${c.telefone || '—'}</td>
       <td><span class="badge ${c.status === 'inativo' ? 'inativo' : 'ativo'}">${c.status === 'inativo' ? 'Inativo' : 'Ativo'}</span></td>
       <td><div class="actions-row">
         <button class="icon-btn" data-action="edit" title="Editar">✏️</button>
@@ -707,6 +709,7 @@ function startEditCliente(id){
     <td class="row-edit"><input type="number" id="edit-cl-dia" min="1" max="31" value="${c.diaVencimento}"></td>
     <td class="row-edit"><input type="number" id="edit-cl-desc" min="0" max="100" step="0.1" value="${(c.percentualDesconto*100)}"></td>
     <td class="row-edit"><input type="number" id="edit-cl-ilum" min="0" step="0.01" value="${c.iluminacaoPublica || 0}"></td>
+    <td class="row-edit"><input type="text" id="edit-cl-telefone" value="${c.telefone || ''}" placeholder="(43) 99999-9999"></td>
     <td colspan="1"></td>
     <td><div class="actions-row">
       <button class="icon-btn" data-action="save-edit" title="Salvar">💾</button>
@@ -719,8 +722,9 @@ function startEditCliente(id){
     const dia = parseInt(document.getElementById('edit-cl-dia').value, 10);
     const desc = parseFloat(document.getElementById('edit-cl-desc').value) / 100;
     const ilum = parseFloat(document.getElementById('edit-cl-ilum').value) || 0;
+    const telefone = document.getElementById('edit-cl-telefone').value.trim();
     if(!nome || isNaN(dia) || isNaN(desc)){ alert('Valores inválidos.'); return; }
-    c.nome = nome; c.endereco = endereco; c.uc = uc; c.diaVencimento = dia; c.percentualDesconto = desc; c.iluminacaoPublica = ilum;
+    c.nome = nome; c.endereco = endereco; c.uc = uc; c.diaVencimento = dia; c.percentualDesconto = desc; c.iluminacaoPublica = ilum; c.telefone = telefone;
     if(await saveData()) render();
   };
   tr.querySelector('[data-action="cancel-edit"]').onclick = () => render();
@@ -765,8 +769,9 @@ document.getElementById('form-cliente').addEventListener('submit', async (e) => 
   const dia = parseInt(document.getElementById('cl-dia').value, 10);
   const desc = parseFloat(document.getElementById('cl-desc').value) / 100;
   const ilum = parseFloat(document.getElementById('cl-ilum').value) || 0;
+  const telefone = document.getElementById('cl-telefone').value.trim();
   if(!nome || isNaN(dia) || isNaN(desc)){ alert('Preencha os campos obrigatórios.'); return; }
-  state.clientes.push({ id: 'cl-' + Date.now(), nome, endereco, uc, diaVencimento: dia, percentualDesconto: desc, iluminacaoPublica: ilum, status: 'ativo', tokenConsulta: gerarTokenConsulta() });
+  state.clientes.push({ id: 'cl-' + Date.now(), nome, endereco, uc, diaVencimento: dia, percentualDesconto: desc, iluminacaoPublica: ilum, telefone, status: 'ativo', tokenConsulta: gerarTokenConsulta() });
   if(await saveData()){ e.target.reset(); render(); }
 });
 
@@ -1116,6 +1121,46 @@ function abrirDemonstrativo(fatId){
   document.getElementById('demo-overlay').style.display = 'flex';
 }
 
+// Normaliza um telefone digitado (com DDD, com ou sem máscara) pro formato que
+// o link do WhatsApp espera: só dígitos, com código do país (55) na frente.
+function telefoneParaWhatsApp(tel){
+  let digitos = (tel || '').replace(/\D/g, '');
+  if(!digitos) return null;
+  if(!digitos.startsWith('55')) digitos = '55' + digitos;
+  return digitos;
+}
+
+async function enviarCobrancaWhatsApp(fatId){
+  const f = state.faturamento.find(x => x.id === fatId);
+  if(!f) return;
+  const cliente = state.clientes.find(c => c.id === f.clienteId);
+  if(!cliente) return;
+
+  const numero = telefoneParaWhatsApp(cliente.telefone);
+  if(!numero){
+    alert(`Cadastre o telefone (WhatsApp) de ${cliente.nome} na aba Clientes antes de enviar a cobrança.`);
+    return;
+  }
+  if(!f.vencimento){
+    alert('Preencha a data de vencimento dessa linha antes de enviar a cobrança.');
+    return;
+  }
+  if(!cliente.tokenConsulta){
+    cliente.tokenConsulta = gerarTokenConsulta();
+    if(!(await saveData())) return;
+  }
+
+  const calc = calcularFatura(f, cliente);
+  const link = `${location.origin}/consulta.html?t=${cliente.tokenConsulta}`;
+  const mensagem = `Olá, ${cliente.nome}! Sua conta de energia solar de ${mesLabel(f.mes)} está disponível.\n\n`
+    + `Valor: ${BRL.format(calc.comDesconto)}\n`
+    + `Vencimento: ${formatDataBR(f.vencimento)}\n\n`
+    + `Confira os detalhes da conta, seu histórico de consumo e a chave Pix aqui:\n${link}`
+    + (state.config.pixContato ? `\n\nDúvidas: ${state.config.pixContato}` : '');
+
+  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
 document.getElementById('demo-fechar').addEventListener('click', () => {
   document.getElementById('demo-overlay').style.display = 'none';
   document.getElementById('demo-frame').srcdoc = '';
@@ -1350,6 +1395,7 @@ function renderFaturamento(){
       <td><input type="checkbox" data-field="pago" ${f.pago ? 'checked' : ''}></td>
       <td><div class="actions-row">
         <button class="icon-btn" data-action="ver-demo" title="Ver / imprimir Demonstrativo">📄</button>
+        <button class="icon-btn" data-action="whatsapp" title="Enviar cobrança por WhatsApp">📲</button>
         <button class="icon-btn" data-action="remove-fat" title="Remover linha">🗑️</button>
       </div></td>`;
     tbody.appendChild(tr);
@@ -1427,6 +1473,12 @@ document.getElementById('tbody-faturamento').addEventListener('click', (e) => {
   if(demoBtn){
     const tr = e.target.closest('tr');
     abrirDemonstrativo(tr.dataset.id);
+    return;
+  }
+  const whatsBtn = e.target.closest('button[data-action="whatsapp"]');
+  if(whatsBtn){
+    const tr = e.target.closest('tr');
+    enviarCobrancaWhatsApp(tr.dataset.id);
   }
 });
 
