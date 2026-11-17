@@ -52,6 +52,14 @@
   .card.warn .value{color:var(--amber);}
   .card .sub{font-size:.78rem;color:var(--muted);margin-top:4px;}
 
+  .rank-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .rank-row:last-child{border-bottom:none;}
+  .rank-pos{font-size:1.15rem;width:26px;text-align:center;flex-shrink:0;}
+  .rank-nome{flex:1;font-weight:600;}
+  .rank-valor{font-weight:700;}
+  .rank-valor.pos{color:var(--green);}
+  .rank-valor.neg{color:var(--red);}
+
   .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px;}
   .panel h2{margin:0 0 14px;font-size:1.05rem;}
   .panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
@@ -185,6 +193,11 @@
       <div class="card" id="d-atraso-card"><div class="label">Em atraso este mês</div><div class="value" id="d-atraso">—</div></div>
       <div class="card" id="d-saldo-card"><div class="label">Saldo ROI acumulado</div><div class="value" id="d-saldo">—</div></div>
       <div class="card" id="d-scee-card"><div class="label">Saldo SCEE não utilizado</div><div class="value" id="d-scee-kwh">—</div><div class="sub" id="d-scee-valor"></div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Clientes mais lucrativos</h2>
+      <div id="top-clientes-lucro"></div>
     </div>
 
     <div class="panel">
@@ -608,6 +621,8 @@ function renderDashboard(){
   document.getElementById('d-scee-kwh').textContent = `${kwhParado.toLocaleString('pt-BR')} kWh`;
   document.getElementById('d-scee-valor').textContent = `≈ ${BRL.format(valorParado)} em créditos`;
 
+  renderTopClientesLucro();
+
   const statusDiv = document.getElementById('dash-status');
   const ultimo = finRows[finRows.length - 1];
   if(ultimo){
@@ -860,6 +875,36 @@ function calcularFatura(f, cliente){
 // mantido por compatibilidade com o Dashboard (só precisa do valor com desconto)
 function calcularValorCobrado(cliente, f){
   return calcularFatura(f, cliente).comDesconto;
+}
+
+// Ranking dos clientes que mais geraram lucro acumulado (todas as contas lançadas até hoje)
+function renderTopClientesLucro(){
+  const totais = {};
+  for(const f of state.faturamento){
+    const cliente = state.clientes.find(c => c.id === f.clienteId);
+    if(!cliente) continue;
+    const lucro = calcularFatura(f, cliente).comDesconto - (f.valorConcessionaria || 0);
+    totais[cliente.id] = (totais[cliente.id] || 0) + lucro;
+  }
+
+  const ranking = Object.keys(totais)
+    .map(id => ({ cliente: state.clientes.find(c => c.id === id), lucro: totais[id] }))
+    .filter(r => r.cliente)
+    .sort((a,b) => b.lucro - a.lucro)
+    .slice(0, 3);
+
+  const wrap = document.getElementById('top-clientes-lucro');
+  if(!ranking.length){
+    wrap.innerHTML = '<p class="hint">Sem lançamentos de faturamento ainda.</p>';
+    return;
+  }
+  const medalhas = ['🥇', '🥈', '🥉'];
+  wrap.innerHTML = ranking.map((r, i) => `
+    <div class="rank-row">
+      <span class="rank-pos">${medalhas[i] || (i + 1) + 'º'}</span>
+      <span class="rank-nome">${r.cliente.nome}</span>
+      <span class="rank-valor ${r.lucro >= 0 ? 'pos' : 'neg'}">${BRL.format(r.lucro)}</span>
+    </div>`).join('');
 }
 
 // ---------- Demonstrativo de Energia (documento por cliente/mês) ----------
