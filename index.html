@@ -50,6 +50,7 @@
   .card.pos .value{color:var(--green);}
   .card.neg .value{color:var(--red);}
   .card.warn .value{color:var(--amber);}
+  .card .sub{font-size:.78rem;color:var(--muted);margin-top:4px;}
 
   .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px;}
   .panel h2{margin:0 0 14px;font-size:1.05rem;}
@@ -183,6 +184,7 @@
       <div class="card"><div class="label">Lucro do mês</div><div class="value" id="d-lucro">—</div></div>
       <div class="card" id="d-atraso-card"><div class="label">Em atraso este mês</div><div class="value" id="d-atraso">—</div></div>
       <div class="card" id="d-saldo-card"><div class="label">Saldo ROI acumulado</div><div class="value" id="d-saldo">—</div></div>
+      <div class="card" id="d-scee-card"><div class="label">Saldo SCEE não utilizado</div><div class="value" id="d-scee-kwh">—</div><div class="sub" id="d-scee-valor"></div></div>
     </div>
 
     <div class="panel">
@@ -586,6 +588,25 @@ function renderDashboard(){
   document.getElementById('d-saldo').textContent = BRL.format(saldo);
   saldoCard.classList.toggle('pos', saldo >= 0);
   saldoCard.classList.toggle('neg', saldo < 0);
+
+  // Saldo SCEE ainda não utilizado (kWh acumulados) e o valor parado nesses créditos,
+  // usando o saldo mais recente lançado de cada cliente e a tarifa daquele lançamento.
+  let kwhParado = 0;
+  let valorParado = 0;
+  for(const c of state.clientes){
+    const lancamentos = state.faturamento
+      .filter(f => f.clienteId === c.id && f.saldoScee != null)
+      .sort((a,b) => mesRefDe(a).localeCompare(mesRefDe(b)));
+    const ultimoComSaldo = lancamentos[lancamentos.length - 1];
+    if(ultimoComSaldo){
+      const tarifa = (ultimoComSaldo.tarifaConsumo || state.config.tarifaConsumo || 0)
+        + (ultimoComSaldo.tarifaUsoSistema || state.config.tarifaUsoSistema || 0);
+      kwhParado += ultimoComSaldo.saldoScee;
+      valorParado += ultimoComSaldo.saldoScee * tarifa;
+    }
+  }
+  document.getElementById('d-scee-kwh').textContent = `${kwhParado.toLocaleString('pt-BR')} kWh`;
+  document.getElementById('d-scee-valor').textContent = `≈ ${BRL.format(valorParado)} em créditos`;
 
   const statusDiv = document.getElementById('dash-status');
   const ultimo = finRows[finRows.length - 1];
