@@ -7,36 +7,45 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#f4f6f8; --card:#ffffff; --surface-2:#eef2f7; --field-bg:#ffffff;
-    --ink:#16202e; --muted:#5b6b7d;
-    --border:#e1e6ee; --accent:#2563eb; --accent-dark:#1d4ed8;
-    --green:#1f8a5f; --green-bg:#e8f6ef; --red:#c1432f; --red-bg:#fbeae7;
-    --amber:#b8860b; --amber-bg:#fbf3de;
+    --bg:#fdf8f0; --card:#ffffff; --surface-2:#fdf0dc; --field-bg:#ffffff;
+    --ink:#241d14; --muted:#8a7a63;
+    --border:#efe0c4; --accent:#e49a2c; --accent-dark:#c97618;
+    --green:#1f9d6c; --green-bg:#e6f6ee; --red:#d1483a; --red-bg:#fbeae6;
+    --amber:#c98a1a; --amber-bg:#fbf1dd;
+    --teal:#0f766e; --teal-bg:#e3f4f1;
     --radius:14px;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   :root[data-theme="dark"]{
-    --bg:#0d1524; --card:#141d30; --surface-2:#1b2740; --field-bg:#101a2c;
-    --ink:#e7edf7; --muted:#8b9ab0;
-    --border:#25324a; --accent:#3b82f6; --accent-dark:#2563eb;
-    --green:#34d399; --green-bg:#123227; --red:#f87171; --red-bg:#3a1620;
-    --amber:#fbbf24; --amber-bg:#3a2e10;
+    --bg:#181020; --card:#241a2e; --surface-2:#2c2038; --field-bg:#1e1527;
+    --ink:#f7ecd9; --muted:#b4a28d;
+    --border:#3a2c46; --accent:#f5a623; --accent-dark:#d4850f;
+    --green:#3ddc97; --green-bg:#17302a; --red:#ff6b5e; --red-bg:#3a1a20;
+    --amber:#ffcf5c; --amber-bg:#3a2e12;
+    --teal:#2dd4c4; --teal-bg:#122e2e;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);padding-bottom:60px;transition:background .15s,color .15s;}
-  header{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;padding:24px 20px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
-  header h1{margin:0 0 4px;font-size:1.5rem;}
-  header p{margin:0;opacity:.9;font-size:.9rem;}
+  header{position:relative;overflow:hidden;background:linear-gradient(120deg,var(--accent-dark) 0%,var(--accent) 55%,#f4c15c 100%);color:#fff;padding:24px 20px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  :root[data-theme="dark"] header{background:linear-gradient(120deg,#241a2e 0%,#7a3f8a 55%,var(--accent) 115%);}
+  header .header-art{position:absolute;right:-18px;top:-30px;width:190px;height:190px;opacity:.28;pointer-events:none;}
+  header .header-art svg{width:100%;height:100%;}
+  header .header-inner{position:relative;z-index:1;}
+  header h1{margin:0 0 4px;font-size:1.5rem;display:flex;align-items:center;gap:8px;}
+  header h1 svg{width:1.3em;height:1.3em;flex:0 0 auto;}
+  header p{margin:0;opacity:.92;font-size:.9rem;}
   .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;background:rgba(255,255,255,.18);padding:4px 10px;border-radius:999px;margin-top:10px;}
   .dot{width:7px;height:7px;border-radius:50%;background:#9be7c4;}
   .dot.err{background:#f3a8a8;}
   .dot.saving{background:#ffe08a;}
-  #theme-toggle{flex:0 0 auto;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;padding:8px 12px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+  #theme-toggle{position:relative;z-index:1;flex:0 0 auto;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;padding:8px 12px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;}
   #theme-toggle:hover{background:rgba(255,255,255,.22);}
 
   nav{display:flex;gap:4px;padding:10px 16px 0;background:var(--bg);position:sticky;top:0;z-index:5;border-bottom:1px solid var(--border);overflow-x:auto;}
-  nav button{border:none;background:none;padding:10px 14px;font-size:.9rem;color:var(--muted);cursor:pointer;border-radius:10px 10px 0 0;font-weight:600;white-space:nowrap;}
+  nav button{border:none;background:none;padding:10px 14px;font-size:.9rem;color:var(--muted);cursor:pointer;border-radius:10px 10px 0 0;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;}
+  nav button svg{width:16px;height:16px;flex:0 0 auto;opacity:.8;}
   nav button.active{color:var(--accent-dark);background:var(--card);border:1px solid var(--border);border-bottom:1px solid var(--card);margin-bottom:-1px;}
+  nav button.active svg{opacity:1;}
 
   main{max-width:1080px;margin:0 auto;padding:20px 16px;}
   main.wide{max-width:1800px;}
@@ -44,9 +53,14 @@
   .view.active{display:block;}
 
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-  .card .label{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px;}
-  .card .value{font-size:1.3rem;font-weight:700;}
+  .card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;overflow:hidden;}
+  .card::before{content:"";position:absolute;right:-18px;top:-18px;width:64px;height:64px;border-radius:50%;background:var(--card-glow,var(--accent));opacity:.12;}
+  .card .icon-badge{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:var(--card-glow,var(--accent));background:color-mix(in srgb, var(--card-glow,var(--accent)) 16%, transparent);color:var(--card-glow,var(--accent));}
+  .card .icon-badge svg{width:18px;height:18px;}
+  .card .label{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px;position:relative;z-index:1;}
+  .card .value{font-size:1.3rem;font-weight:700;position:relative;z-index:1;}
+  .panel h2{display:flex;align-items:center;gap:8px;}
+  .panel h2 svg{width:19px;height:19px;color:var(--accent);flex:0 0 auto;}
   .card.pos .value{color:var(--green);}
   .card.neg .value{color:var(--red);}
   .card.warn .value{color:var(--amber);}
@@ -165,8 +179,30 @@
 <body>
 
 <header>
-  <div>
-    <h1 id="coop-title">Cooperativa Solar</h1>
+  <div class="header-art" aria-hidden="true">
+    <svg viewBox="0 0 200 200" fill="none">
+      <circle cx="150" cy="46" r="26" fill="#fff"/>
+      <g stroke="#fff" stroke-width="5" stroke-linecap="round">
+        <line x1="150" y1="2" x2="150" y2="-10"/>
+        <line x1="150" y1="2" x2="150" y2="12"/>
+        <line x1="190" y1="46" x2="202" y2="46"/>
+        <line x1="178" y1="18" x2="188" y2="8"/>
+        <line x1="178" y1="74" x2="188" y2="84"/>
+        <line x1="122" y1="18" x2="112" y2="8"/>
+        <line x1="122" y1="74" x2="112" y2="84"/>
+      </g>
+      <path d="M0 150 L30 120 L55 140 L90 100 L130 150 L200 110 L200 200 L0 200 Z" fill="#fff" opacity=".55"/>
+      <g stroke="#fff" stroke-width="2" opacity=".8">
+        <path d="M40 150 L75 128 L110 150"/>
+        <path d="M58 139 L58 150 M92 139 L92 150"/>
+      </g>
+    </svg>
+  </div>
+  <div class="header-inner">
+    <h1 id="coop-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+      <span>Cooperativa Solar</span>
+    </h1>
     <p id="coop-subtitle">Gestão de clientes, faturamento e retorno do investimento</p>
     <span class="status-pill"><span class="dot" id="status-dot"></span><span id="status-text">Carregando…</span></span>
   </div>
@@ -174,11 +210,11 @@
 </header>
 
 <nav>
-  <button data-view="dashboard" class="active">Dashboard</button>
-  <button data-view="clientes">Clientes</button>
-  <button data-view="faturamento">Contas</button>
-  <button data-view="financeiro">Financeiro / ROI</button>
-  <button data-view="config">Configurações</button>
+  <button data-view="dashboard" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</button>
+  <button data-view="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M15.5 20c.3-2.6 2-4.6 4.3-5.2"/></svg>Clientes</button>
+  <button data-view="faturamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4"/><path d="M9 12h7M9 16h7M9 8h3"/></svg>Contas</button>
+  <button data-view="financeiro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9M9 21V4M15 21v-7M21 21V12"/><path d="M3 9l6-5 6 5 6-6"/></svg>Financeiro / ROI</button>
+  <button data-view="config"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-2.6-1.5L14 2h-4l-.4 2.5a7.6 7.6 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 2.6 1.5L10 22h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg>Configurações</button>
 </nav>
 
 <main id="main-content">
@@ -187,21 +223,39 @@
   <!-- DASHBOARD -->
   <section class="view active" id="view-dashboard">
     <div class="cards">
-      <div class="card"><div class="label">Clientes ativos</div><div class="value" id="d-clientes">—</div></div>
-      <div class="card"><div class="label">Receita do mês</div><div class="value" id="d-receita">—</div></div>
-      <div class="card"><div class="label">Lucro do mês</div><div class="value" id="d-lucro">—</div></div>
-      <div class="card" id="d-atraso-card"><div class="label">Em atraso este mês</div><div class="value" id="d-atraso">—</div></div>
-      <div class="card" id="d-saldo-card"><div class="label">Saldo ROI acumulado</div><div class="value" id="d-saldo">—</div></div>
-      <div class="card" id="d-scee-card"><div class="label">Saldo SCEE não utilizado</div><div class="value" id="d-scee-kwh">—</div><div class="sub" id="d-scee-valor"></div></div>
+      <div class="card" style="--card-glow:var(--teal);">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M15.5 20c.3-2.6 2-4.6 4.3-5.2"/></svg></div>
+        <div class="label">Clientes ativos</div><div class="value" id="d-clientes">—</div>
+      </div>
+      <div class="card" style="--card-glow:var(--accent);">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="2.6"/><path d="M5 6v5c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/><path d="M5 11v5c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-5"/></svg></div>
+        <div class="label">Receita do mês</div><div class="value" id="d-receita">—</div>
+      </div>
+      <div class="card" style="--card-glow:var(--green);">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-9"/><path d="M12 13c0-5 4-8 8-8 0 5-3 8-8 8z"/><path d="M12 15c0-4-3-6.5-7-6.5 0 4.2 2.8 6.9 7 6.9z"/></svg></div>
+        <div class="label">Lucro do mês</div><div class="value" id="d-lucro">—</div>
+      </div>
+      <div class="card" id="d-atraso-card" style="--card-glow:var(--red);">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.2"/><path d="M12 9v4l2.6 2.6"/><path d="M9 2.2h6"/></svg></div>
+        <div class="label">Em atraso este mês</div><div class="value" id="d-atraso">—</div>
+      </div>
+      <div class="card" id="d-saldo-card" style="--card-glow:var(--accent);">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="16" height="10" rx="2"/><path d="M21 10.5v4"/><path d="M11 9l-3 4h4l-3 4" stroke-linejoin="round"/></svg></div>
+        <div class="label">Saldo ROI acumulado</div><div class="value" id="d-saldo">—</div>
+      </div>
+      <div class="card" id="d-scee-card" style="--card-glow:var(--teal);">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4.5 4.5 0 0 1 .4-9 5.5 5.5 0 0 1 10.6 1.6A4 4 0 0 1 17.5 15z"/><path d="M12.5 11l-2.6 3.4h3l-2.4 3.4" stroke-linejoin="round"/></svg></div>
+        <div class="label">Saldo SCEE não utilizado</div><div class="value" id="d-scee-kwh">—</div><div class="sub" id="d-scee-valor"></div>
+      </div>
     </div>
 
     <div class="panel">
-      <h2>Clientes mais lucrativos</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8l1 5a5 5 0 0 1-10 0z"/><path d="M5 5v1a3 3 0 0 0 3 3M19 5v1a3 3 0 0 1-3 3"/><path d="M12 14v4M9 21h6M10 18h4"/></svg>Clientes mais lucrativos</h2>
       <div id="top-clientes-lucro"></div>
     </div>
 
     <div class="panel">
-      <h2>Situação do investimento</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Situação do investimento</h2>
       <div id="dash-status"></div>
       <div class="progress-wrap">
         <div class="progress-bar" id="progress-bar"><div style="width:0%"></div></div>
@@ -211,7 +265,7 @@
     </div>
 
     <div class="panel">
-      <h2>Evolução mensal</h2>
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V12l4-3 4 4 6-7v14"/></svg>Evolução mensal</h2>
       <canvas id="chart-saldo" height="220"></canvas>
     </div>
   </section>
@@ -247,21 +301,9 @@
 
   <!-- CONTAS -->
   <section class="view" id="view-faturamento">
-    <div class="panel">
-      <h2>Histórico por mês</h2>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th>Mês</th><th>Clientes</th><th>Total cobrado</th><th>Lucro total</th><th>Pagos</th><th></th></tr></thead>
-          <tbody id="tbody-fat-historico"></tbody>
-        </table>
-      </div>
-      <div class="empty" id="fat-historico-empty" style="display:none;">Nenhum mês lançado ainda.</div>
-      <p class="hint">Clique no ícone para abrir o demonstrativo daquele mês abaixo.</p>
-    </div>
-
     <div class="panel" id="painel-faturamento-mes">
       <div class="panel-head">
-        <h2>Demonstrativo do mês</h2>
+        <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4"/><path d="M9 12h7M9 16h7M9 8h3"/></svg>Demonstrativo do mês</h2>
         <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
           <input type="hidden" id="fat-mes">
           <div><label for="fat-ano">Ano</label><select id="fat-ano"></select></div>
@@ -285,6 +327,18 @@
       <div class="empty" id="faturamento-empty" style="display:none;">Escolha um mês e clique em "Carregar / gerar mês".</div>
       <p class="hint">Lance aqui a tarifa, o consumo e a bandeira exatos da conta Copel de cada cliente naquele mês — é isso que o cálculo usa (não uma tarifa fixa). "Mês referência" é o mês da conta (ex: julho); "Mês" no topo/histórico é o mês em que ela é cobrada (ex: vence em setembro). "Saldo SCEE" é o saldo de energia acumulado que aparece na própria conta da Copel ("Saldo Acumulado em cada Posto Horário"), pra acompanhar quanto de crédito solar cada conta ainda tem disponível. Clique em 📄 pra ver/imprimir o Demonstrativo pronto pra enviar ao cliente.</p>
       <div style="margin-top:12px;"><button class="btn" id="btn-salvar-fat">Salvar contas do mês</button></div>
+    </div>
+
+    <div class="panel">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l3.5-4.5 3 3L19 7"/></svg>Histórico por mês</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Mês</th><th>Clientes</th><th>Total cobrado</th><th>Lucro total</th><th>Pagos</th><th></th></tr></thead>
+          <tbody id="tbody-fat-historico"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="fat-historico-empty" style="display:none;">Nenhum mês lançado ainda.</div>
+      <p class="hint">Clique no ícone para abrir o demonstrativo daquele mês acima.</p>
     </div>
   </section>
 
